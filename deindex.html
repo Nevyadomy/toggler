@@ -1,0 +1,2977 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дешифратор</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0f0c29;
+            color: #fff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .controls {
+            border-bottom: 2px solid #333;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff88;
+        }
+
+        .upload-area {
+            border: 3px dashed #00ff88;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(0, 255, 136, 0.05);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff99;
+        }
+
+        .upload-area h3 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #1a1a2e;
+            color: #00ff88;
+            border: 2px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+            border-top: 2px solid #333;
+            padding-top: 20px;
+        }
+
+        .data-section {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .section-title {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a3e;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            color: #8899aa;
+            font-weight: bold;
+        }
+
+        .map-link {
+            color: #66aaff;
+            text-decoration: none;
+        }
+
+        .map-link:hover {
+            text-decoration: underline;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1em;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #8899aa;
+            font-size: 0.9em;
+        }
+
+        .json-viewer {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 500px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #00ff88;
+        }
+
+        pre {
+            white-space: pre-wrap;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #2a2a3e;
+            border: none;
+            color: #8899aa;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab.active {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="upload-area" id="dropArea">
+            <h3>ЗАГРУЗИТЕ ДАННЫЕ</h3>
+            <p>Перетащите сюда JSON файл вставьте текст ниже</p>
+            <input type="file" id="fileInput" accept=".json,.txt" style="display: none;">
+        </div>
+
+        <textarea id="jsonInput" placeholder="Вставьте JSON данные сюда..."></textarea>
+
+        <div class="controls">
+            <div>
+                <button onclick="decodeData()">РАСШИФРОВКА</button>
+                <button class="secondary" onclick="clearAll()">ОЧИСТИТЬ</button>
+                <button class="secondary" onclick="exportReport()">ЭКСПОРТ ОТЧЕТА</button>
+            </div>
+
+            <div class="tabs" id="tabs">
+                <button class="tab active" onclick="switchTab('stats', this)">СТАТИСТИКА</button>
+                <button class="tab" onclick="switchTab('details', this)">ДЕТАЛИ</button>
+                <button class="tab" onclick="switchTab('raw', this)">RAW JSON</button>
+                <button class="tab" onclick="switchTab('map', this)">КАРТА</button>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div id="statsTab" class="tab-content">
+                <div class="stats" id="stats"></div>
+            </div>
+
+            <div id="detailsTab" class="tab-content" style="display: none;">
+                <div id="details"></div>
+            </div>
+
+            <div id="rawTab" class="tab-content" style="display: none;">
+                <div class="json-viewer">
+                    <pre id="rawJson"></pre>
+                </div>
+            </div>
+
+            <div id="mapTab" class="tab-content" style="display: none;">
+                <div id="mapContainer"
+                    style="max-height: 700px; background: #1a1a2e; border-radius: 8px; padding: 20px;">
+                    <p>Карта загрузится при наличии координат</p>
+                    <div id="map" style="height: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const jsonInput = document.getElementById('jsonInput');
+        const results = document.getElementById('results');
+        const tabs = document.querySelectorAll('.tab');
+
+        dropArea.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.style.background = 'rgba(0, 255, 136, 0.15)';
+            dropArea.style.borderColor = '#00ff99';
+        }
+
+        function unhighlight() {
+            dropArea.style.background = '';
+            dropArea.style.borderColor = '';
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            const file = files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                jsonInput.value = e.target.result;
+                decodeData();
+            };
+
+            reader.readAsText(file);
+        }
+
+        function decodeData() {
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    alert('Вставьте JSON данные!');
+                    return;
+                }
+
+                let jsonData = extractJsonFromEmail(input);
+
+                const data = JSON.parse(jsonData);
+
+                displayResults(data);
+                results.style.display = 'block';
+
+                results.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert('Ошибка парсинга JSON: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function extractJsonFromEmail(text) {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                return jsonMatch[0];
+            }
+
+            if (text.startsWith('{')) {
+                return text;
+            }
+
+            const lines = text.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim().startsWith('{')) {
+                    return lines.slice(i).join('\n');
+                }
+            }
+
+            throw new Error('JSON не найден в тексте');
+        }
+
+        function displayResults(data) {
+            displayStats(data);
+            displayDetails(data);
+            displayRawJson(data);
+            displayMap(data);
+        }
+
+        function displayStats(data) {
+            const statsContainer = document.getElementById('stats');
+
+            const stats = [
+                {
+                    label: 'IP АДРЕС',
+                    value: data.location?.details?.ipBased?.ip ? `<span title="Полный IP">${data.location.details.ipBased.ip}</span>` : 'Не определен',
+                    color: '#ff9966'
+                },
+                {
+                    label: 'ГЕОЛОКАЦИЯ',
+                    value: data.capabilities?.apis?.geolocation ? 'Доступна' : 'Нет доступа',
+                    color: data.capabilities?.apis?.geolocation ? '#00ff88' : '#ff6666'
+                },
+                {
+                    label: 'ТОЧНОСТЬ',
+                    value: getGeoAccuracySimple(data),
+                    color: getGeoAccuracyColorSimple(data)
+                },
+                {
+                    label: 'БРАУЗЕР',
+                    value: `${data.browser?.name || ''} ${data.browser?.version ? 'v' + data.browser.version : ''}`.trim(),
+                    color: '#00ff88'
+                },
+                {
+                    label: 'ТИП ОС',
+                    value: data.browser?.platform || 'Не определен',
+                    color: '#667eea'
+                },
+                {
+                    label: 'ТИП УСТРОЙСТВА',
+                    value: getDeviceType(data),
+                    color: getDeviceColor(data)
+                },
+                {
+                    label: 'ПЕРЕКЛЮЧЕНИЙ',
+                    value: data.projectData?.switchCount || '0',
+                    color: '#ff66aa'
+                },
+                {
+                    label: 'ЧАСОВОЙ ПОЯС',
+                    value: data.system?.time?.timezone ?
+                        data.system.time.timezone.replace('_', ' ') : 'Не определен',
+                    color: '#ffcc00'
+                },
+                {
+                    label: 'ЗАДЕРЖКА',
+                    value: data.network?.rtt ? `${typeof data.network.rtt === 'number' ? data.network.rtt : parseInt(data.network.rtt) || 0} ms` : 'Не известна',
+                    color: data.network?.rtt < 100 ? '#00ff88' : data.network?.rtt < 300 ? '#ffcc00' : '#ff6666'
+                },
+                {
+                    label: 'ЯЗЫК/ЯЗЫКИ',
+                    value: data.browser?.languages?.length ? `${data.browser.language} + ${data.browser.languages.length - 1}` : data.browser?.language || 'Не определен',
+                    color: '#aa66ff'
+                },
+                {
+                    label: 'BLUETOOTH',
+                    value: data.bluetooth?.available ? 'Доступен' : 'Нет доступа',
+                    color: data.bluetooth?.available ? '#00ff88' : '#ff5555'
+                },
+                {
+                    label: 'USB',
+                    value: data.capabilities?.apis?.usb ? 'Доступен' : 'Нет доступа',
+                    color: data.capabilities?.apis?.usb ? '#00ff88' : '#ff5555'
+                }
+            ];
+
+            statsContainer.innerHTML = stats.map(stat => `
+            <div class="stat-box">
+                <div class="stat-value" style="color: ${stat.color}">${stat.value}</div>
+                <div class="stat-label">${stat.label}</div>
+            </div>
+            `).join('');
+        }
+
+        function displayDetails(data) {
+            const detailsContainer = document.getElementById('details');
+
+            const sections = [
+                {
+                    title: 'МЕТА-ИНФОРМАЦИЯ',
+                    data: [
+                        ['Время сбора', formatDate(data.meta?.collectedAt)],
+                        ['Источник', data.meta?.source || 'Не определен'],
+                        ['Проект', data.projectData?.project || 'СЕТЬ'],
+                        ['Триггер активации', data.projectData?.activationTrigger || 'Неизвестно']
+                    ]
+                },
+                {
+                    title: 'БРАУЗЕР',
+                    data: [
+                        ['Браузер', `${data.browser?.name || ''} ${data.browser?.version || ''}`],
+                        ['Версия', data.browser?.version || 'Не определена'],
+                        ['User Agent', `<small>${data.browser?.userAgent?.substring(0, 80)}...</small>`],
+                        ['Язык', data.browser?.language || 'Не определен'],
+                        ['Поддерживаемые языки', data.browser?.languages?.join(', ') || 'Не определены'],
+                        ['Платформа', data.browser?.platform || 'Не определен'],
+                        ['Куки', formatCookies(data.browser?.cookieEnabled)],
+                        ['User Agent длина', `${data.browser?.userAgentLength || 0} символов`],
+                        ['Тип устройства', getDeviceType(data)],
+                        ['Chromium', formatBoolean(data.browser?.isChromium, 'Да', 'Нет')],
+                        ['Edge', formatBoolean(data.browser?.isEdge, 'Да', 'Нет')],
+                        ['Opera', formatBoolean(data.browser?.isOpera, 'Да', 'Нет')]
+                    ]
+                },
+                {
+                    title: 'СИСТЕМА',
+                    data: [
+                        ['Разрешение, px', `${data.system?.screen?.width || 0} × ${data.system?.screen?.height || 0}`],
+                        ['Цветность', `${data.system?.screen?.colorDepth || 0} бит`],
+                        ['Пиксельное соотношение', data.system?.window?.devicePixelRatio || '1'],
+                        ['Ядра CPU', data.system?.hardware?.hardwareConcurrency || 'Не определено'],
+                        ['Память', data.system?.hardware?.deviceMemory ? `${data.system.hardware.deviceMemory} GB` : 'Не определено'],
+                        ['Часовой пояс', data.system?.time?.timezone || 'Не определен'],
+                        ['Сенсорный экран', formatBoolean(data.system?.hardware?.hasTouchScreen, 'Да', 'Нет')],
+                        ['Цветовой охват', data.system?.screen?.colorGamut || 'Неизвестно'],
+                        ['HDR', formatBoolean(data.system?.screen?.hdr, 'Поддерживается', 'Не поддерживается')]
+                    ]
+                },
+                {
+                    title: 'МЕСТОПОЛОЖЕНИЕ',
+                    data: [
+                        ['IP адрес', `<span class="data-value ip">${data.location?.details?.ipBased?.ip || 'Не определен'}</span>`],
+                        ['Анализ IP-адреса', getIPAnalysisDisplay(data)],
+                        ['Страна', data.location?.details?.ipBased?.country || 'Не определена'],
+                        ['Город', data.location?.details?.ipBased?.city || 'Не определен'],
+                        ['Провайдер', data.location?.details?.ipBased?.org || 'Не определен'],
+                        ['Точные координаты', getPreciseLocation(data)]
+                    ]
+                },
+                {
+                    title: 'СЕТЬ',
+                    data: [
+                        ['Статус', formatNetworkStatus(data.network?.online)],
+                        ['Тип соединения', data.network?.connectionType || 'Не определен'],
+                        ['Эффективный тип', data.network?.effectiveType || 'Не определен'],
+                        ['Скорость', data.network?.downlink ? `${data.network.downlink} Mbps` : 'Не известна'],
+                        ['Задержка', data.network?.rtt ? `${data.network.rtt} ms` : 'Не известна'],
+                        ['Экономия трафика', formatSaveData(data.network?.saveData)],
+                        ['API обнаружен', data.network?.detectedAPI || 'Не определено'],
+                        ['Поддерживается', formatBoolean(data.network?.supported, 'Да', 'Нет')]
+                    ]
+                },
+                {
+                    title: 'ВОЗМОЖНОСТИ',
+                    data: [
+                        ['Геолокация', formatBoolean(data.capabilities?.apis?.geolocation, 'Доступен', 'Нет доступа')],
+                        ['Камера/Микрофон', formatBoolean(data.capabilities?.apis?.mediaDevices, 'Доступна/доступен', 'Нет доступа')],
+                        ['Уведомления', formatBoolean(data.capabilities?.apis?.notifications, 'Поддерживаются', 'Не поддерживаются')],
+                        ['Буфер обмена', formatBoolean(data.capabilities?.apis?.clipboard, 'Доступен', 'Нет доступа')],
+                        ['WebGL', formatBoolean(data.capabilities?.apis?.webGL, 'Поддерживается <small>(3D графика)</small>', 'Не поддерживается')],
+                        ['Service Workers', formatBoolean(data.capabilities?.apis?.serviceWorker, 'Доступны <small>(оффлайн-режим)</small>', 'Нет доступа')],
+                        ['Bluetooth', formatBoolean(data.capabilities?.apis?.bluetooth, 'Доступен', 'Нет доступа')],
+                        ['USB', formatBoolean(data.capabilities?.apis?.usb, 'Доступен', 'Нет доступа')],
+                        ['WebXR (VR/AR)', formatBoolean(data.capabilities?.apis?.webXR, 'Доступен', 'Нет доступа')]
+                    ]
+                },
+                {
+                    title: 'ДОПОЛНИТЕЛЬНО',
+                    data: [
+                        ['Куки', formatBoolean(data.capabilities?.storage?.cookies, 'Поддерживаются', 'Не поддерживаются')],
+                        ['LocalStorage', formatBoolean(data.capabilities?.storage?.localStorage, 'Доступно', 'Нет доступа')],
+                        ['SessionStorage', formatBoolean(data.capabilities?.storage?.sessionStorage, 'Доступно', 'Нет доступа')],
+                        ['IndexedDB', formatBoolean(data.capabilities?.storage?.indexedDB, 'Доступна <small>(база данных)</small>', 'Нет доступа')],
+                        ['Плагины', data.additional?.plugins?.length ? `${data.additional.plugins.length} установлено` : 'Нет плагинов']
+                    ]
+                },
+                {
+                    title: 'РАСШИРЕННЫЕ',
+                    data: [
+                        ['WebAuthn API', getWebAuthnDetails(data.advanced?.webAuthn)],
+                        ['Share API', getShareAPIDetails(data.advanced?.shareAPI)],
+                        ['WebRTC', getWebRTCDetails(data.advanced?.webRTC)],
+                        ['Payment API', getPaymentAPIDetails(data.advanced?.paymentAPI)],
+                        ['Credentials API', getCredentialsAPIDetails(data.advanced?.credentialsAPI)],
+                        ['Battery API', getBatteryDetails(data.advanced?.battery)],
+                        ['Fonts API', getFontsInfoDisplay(data)],
+                        ['MIME Types', getMimeTypesDisplay(data)],
+                        ['WebGL', getWebGLInfoDisplay(data)]
+                    ]
+                },
+                {
+                    title: 'ПОВЕДЕНИЕ',
+                    data: [
+                        ['Глубина скролла', data.behavior?.scrollDepth || 'Нет доступа'],
+                        ['Время на странице', data.behavior?.timeOnPage || 'Нет доступа'],
+                        ['Ориентация экрана', data.behavior?.screenOrientation || 'Нет доступа'],
+                        ['Видимость страницы', data.behavior?.visibilityState || 'Нет доступа'],
+                        ['Фокус окна', data.behavior?.hasFocus ? 'В фокусе' : 'Не в фокусе']
+                    ]
+                },
+                {
+                    title: 'ХРАНИЛИЩА',
+                    data: [
+                        ['LocalStorage', getLocalStorageDetails(data)],
+                        ['SessionStorage', data.storage?.sessionStorage?.available ? `<span style="color:#00ff88">● Доступно: </span> ${data.storage.sessionStorage.count || 0} записей` : formatBoolean(false, 'Доступно', 'Не доступно')],
+                        ['IndexedDB', data.storage?.indexedDB?.available ? `<span style="color:#00ff88">● Доступно: </span> ${data.storage.indexedDB.databases?.length || 0} баз` : formatBoolean(false, 'Доступно', 'Не доступно')],
+                        ['Cookies', getDetailedCookiesDisplay(data)],
+                        ['WebSQL', getWebSQLStatus(data)],
+                        ['Cache API', getCacheAPIInfo(data)]
+                    ]
+                },
+                {
+                    title: 'ДАТЧИКИ',
+                    data: [
+                        ['Гироскоп', formatBoolean(data.sensors?.gyroscope, 'Есть', 'Нет')],
+                        ['Акселерометр', formatBoolean(data.sensors?.accelerometer, 'Есть', 'Нет')],
+                        ['Датчик освещения', formatBoolean(data.sensors?.ambientLight, 'Есть', 'Нет')],
+                        ['Датчик приближения', formatBoolean(data.sensors?.proximity, 'Есть', 'Нет')],
+                        ['Датчик движения', formatBoolean(data.sensors?.deviceMotion, 'Есть', 'Нет')],
+                        ['Ориентация', formatBoolean(data.sensors?.deviceOrientation, 'Есть', 'Нет')],
+                        ['Магнитометр', formatBoolean(data.sensors?.magnetometer, 'Есть', 'Нет')]
+                    ]
+                },
+                {
+                    title: 'BLUETOOTH УСТРОЙСТВА',
+                    data: [
+                        ['Доступность API', formatBoolean(data.bluetooth?.available, 'Доступен', 'Нет доступа')],
+                        ['Доступно в системе', formatBoolean(data.bluetooth?.details?.isAvailable, 'Да', 'Нет')],
+                        ['Разрешение', data.bluetooth?.details?.permissions || 'Неизвестно'],
+                        ['Сопряженные устройства', data.bluetooth?.details?.pairedDevicesCount || 0],
+                        ['Поддержка сканирования', formatBoolean(data.bluetooth?.details?.canScan, 'Есть', 'Нет')],
+                        ['Устройства', getBluetoothDevicesDisplay(data.bluetooth?.devices)]
+                    ]
+                },
+                {
+                    title: 'USB УСТРОЙСТВА',
+                    data: [
+                        ['Доступность API', formatBoolean(data.usb?.available, 'Доступен', 'Нет доступа')],
+                        ['Разрешение', data.usb?.details?.permissionState || 'Неизвестно'],
+                        ['Подключенные устройства', data.usb?.details?.connectedDevicesCount || 0],
+                        ['Устройства', getUSBDevicesDisplay(data.usb?.devices)]
+                    ]
+                },
+                {
+                    title: 'КАМЕРА И МИКРОФОН',
+                    data: [
+                        ['Всего камер', data.media?.details?.summary?.cameraCount || 0],
+                        ['Всего микрофонов', data.media?.details?.summary?.microphoneCount || 0],
+                        ['Фронтальная камера', formatBoolean(data.media?.details?.systemInfo?.hasFrontCamera, 'Есть', 'Нет')],
+                        ['Тыловая камера', formatBoolean(data.media?.details?.systemInfo?.hasBackCamera, 'Есть', 'Нет')],
+                        ['Внешняя камера', formatBoolean(data.media?.details?.systemInfo?.hasExternalCamera, 'Есть', 'Нет')],
+                        ['Захват экрана', formatBoolean(data.media?.details?.screen?.hasScreenCapture, 'Поддерживается', 'Не поддерживается')],
+                        ['Детали устройств', getMediaDevicesDisplay(data.media?.details?.devices)]
+                    ]
+                },
+                {
+                    title: 'ПРИВАТНОСТЬ И ЗАЩИТА',
+                    data: [
+                        ['Флаги приватности', getPrivacyFlagsDisplay(data)],
+                        ['Заблокированные API', getBlockedAPIsDisplay(data)],
+                        ['Настройки куки', getCookieSettingsDisplay(data)],
+                        ['Защита от фингерпринтинга', getFingerprintingProtectionDisplay(data)],
+                        ['Блокировщики рекламы', getAdBlockersDisplay(data)],
+                        ['Уязвимости браузера', getBrowserVulnerabilitiesDisplay(data)],
+                        ['Security Headers', getSecurityHeadersDisplay(data)],
+                        ['WebGL уязвимости', getWebGLVulnerabilitiesDisplay(data)],
+                        ['CORS проблемы', getCorsIssuesDisplay(data)]
+                    ]
+                },
+                {
+                    title: 'ПОЛЬЗОВАТЕЛЬСКАЯ ИНФОРМАЦИЯ',
+                    data: [
+                        ['In-App Браузеры', getInAppBrowsersDisplay(data)],
+                        ['Социальные виджеты', getSocialWidgetsDisplay(data)],
+                        ['Сохраненные логины', getSavedLoginsDisplay(data)],
+                        ['OAuth редиректы', getOAuthRedirectsDisplay(data)],
+                        ['Присутствие в соцсетях', getSocialMediaPresenceDisplay(data)],
+                        ['Поведение в браузере', getBrowserHabitsDisplay(data)],
+                        ['Взаимодействие с устройством', getDeviceInteractionDisplay(data)]
+                    ]
+                },
+                {
+                    title: 'ПЛАТЕЖИ И АВТОЗАПОЛНЕНИЕ',
+                    data: [
+                        ['Общий статус', getPaymentSummaryDisplay(data)],
+                        ['Автозаполнение', getAutofillDisplay(data)],
+                        ['Платежные системы', getPaymentSystemsDisplay(data)],
+                        ['Биометрия/ключи', getWebAuthnDisplay(data)]
+                    ]
+                }
+            ];
+
+            detailsContainer.innerHTML = sections.map(section => `
+                <div class="data-section">
+                    <div class="section-title">
+                        <span>${section.title}</span>
+                    </div>
+                    ${section.data.map(([label, value]) => `
+                        <div class="data-row">
+                            <div class="data-label">${label}</div>
+                            <div class="data-value">${value}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        function displayRawJson(data) {
+            document.getElementById('rawJson').textContent =
+                JSON.stringify(data, null, 2);
+        }
+
+        function displayMap(data) {
+            const mapContainer = document.getElementById('mapContainer');
+
+            if (data.location?.details?.precise?.latitude && data.location?.details?.precise?.longitude) {
+                const lat = data.location.details.precise.latitude;
+                const lon = data.location.details.precise.longitude;
+                const accuracy = data.location.details.precise.accuracy || 'Неизвестно';
+
+                mapContainer.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Координаты:</strong> ${lat}, ${lon}<br>
+                        <strong>Точность:</strong> ${accuracy}<br>
+                        <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16" 
+                           target="_blank" class="map-link">
+                            🔗 Открыть в OpenStreetMap
+                        </a> | 
+                        <a href="https://maps.google.com/?q=${lat},${lon}" 
+                           target="_blank" class="map-link">
+                            🔗 Открыть в Google Maps
+                        </a>
+                    </div>
+                    <iframe 
+                        width="100%" 
+                        height="450" 
+                        frameborder="0" 
+                        scrolling="no" 
+                        marginheight="0" 
+                        marginwidth="0" 
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.01}%2C${lat - 0.01}%2C${lon + 0.01}%2C${lat + 0.01}&layer=mapnik&marker=${lat}%2C${lon}">
+                    </iframe>
+                `;
+            } else if (data.location?.details?.ipBased?.latitude && data.location?.details?.ipBased?.longitude) {
+                const lat = data.location.details.ipBased.latitude;
+                const lon = data.location.details.ipBased.longitude;
+
+                mapContainer.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Примерные координаты по IP:</strong> ${lat}, ${lon}<br>
+                        <strong>Точность:</strong> Низкая (по IP)<br>
+                        <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=12" 
+                           target="_blank" class="map-link">
+                            🔗 Открыть в OpenStreetMap
+                        </a>
+                    </div>
+                    <iframe 
+                        width="100%" 
+                        height="450" 
+                        frameborder="0" 
+                        scrolling="no" 
+                        marginheight="0" 
+                        marginwidth="0" 
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.05}%2C${lat - 0.05}%2C${lon + 0.05}%2C${lat + 0.05}&layer=mapnik&marker=${lat}%2C${lon}">
+                    </iframe>
+                `;
+            } else {
+                mapContainer.innerHTML = `
+                    <div style="text-align: center; padding: 50px;">
+                        <p style="color: #8899aa; font-size: 1.2em;">
+                            🗺️ Геолокационные данные отсутствуют<br>
+                            <small>Для отображения карты нужны координаты</small>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function getWebSQLStatus(data) {
+            let webSQL = data.capabilities?.misc?.webSQL;
+
+            if (webSQL && typeof webSQL === 'object') {
+                webSQL = webSQL.available;
+            }
+
+            if (webSQL === undefined) {
+                webSQL = data.advanced?.webSQL;
+                if (webSQL && typeof webSQL === 'object') {
+                    webSQL = webSQL.available;
+                }
+            }
+
+            if (webSQL === undefined) {
+                webSQL = data.storage?.webSQL?.available;
+            }
+
+            return formatBoolean(webSQL, 'Поддерживается', 'Не поддерживается');
+        }
+
+        function getCacheAPIInfo(data) {
+            const cacheAPI = data.advanced?.cacheAPI || data.storage?.cacheAPI;
+
+            if (!cacheAPI || !cacheAPI.available) {
+                return '<span style="color:#ff5555">● Нет доступа</span>';
+            }
+
+            const count = cacheAPI.count || cacheAPI.caches?.length || 0;
+            return `${count} кэшей`;
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return 'Не определено';
+            return new Date(isoString).toLocaleString('ru-RU');
+        }
+
+        function formatNetworkStatus(online) {
+            return online ?
+                '<span style="color:#00ff88">● Онлайн</span>' :
+                '<span style="color:#ff5555">● Оффлайн</span>';
+        }
+
+        function formatCookies(enabled) {
+            return enabled ?
+                '<span style="color:#00ff88">● Включены</span>' :
+                '<span style="color:#ff5555">● Выключены</span>';
+        }
+
+        function formatSaveData(saveData) {
+            return saveData ?
+                '<span style="color:#ffaa00">● Включена</span>' :
+                '<span style="color:#ff5555">● Выключена</span>';
+        }
+
+        function formatBoolean(value, trueText, falseText) {
+            if (value === undefined || value === null) {
+                return '<span style="color:#ff5555">● undefined</span>';
+            }
+
+            if (value === true || value === 'true') {
+                return `<span style="color:#00ff88">● ${trueText}</span>`;
+            } else if (value === false || value === 'false') {
+                return `<span style="color:#ff5555">● ${falseText}</span>`;
+            }
+            return `<span style="color:#8899aa">● Не определено</span>`;
+        }
+
+        function getDeviceType(data) {
+            const width = data.system?.screen?.width;
+            const isMobile = data.browser?.isMobile;
+            const isTablet = data.browser?.isTablet;
+
+            if (!width) return '<span style="color:#8899aa">Не определено</span>';
+
+            if (width < 768) return '📱 Мобильное';
+            if (width < 992) return '📟 Планшет';
+            if (width < 1200) return '💻 Ноутбук';
+            return '🖥️ Десктоп';
+        }
+
+        function getDeviceColor(data) {
+            const width = data.system?.screen?.width;
+            if (!width) return '#8899aa';
+
+            if (width < 768) return '#ff66aa';
+            if (width < 1024) return '#ff9966';
+            if (width < 1440) return '#667eea';
+            if (width < 2560) return '#00ff88';
+            return '#ffcc00';
+        }
+
+        function getGeoAccuracySimple(data) {
+            if (data.location?.details?.precise?.latitude) {
+                const acc = data.location.details.precise.accuracy || '';
+                if (acc.includes('метр')) {
+                    const meters = parseInt(acc) || 1000;
+                    if (meters < 100) return 'Точная';
+                    if (meters < 500) return 'Хорошая';
+                }
+                return 'Приблизительная';
+            }
+
+            if (data.location?.details?.ipBased?.country_name) {
+                return 'По IP';
+            }
+
+            if (data.location?.details?.ipBased?.ip) {
+                return 'Только IP';
+            }
+
+            return 'Нет данных';
+        }
+
+        function getGeoAccuracyColorSimple(data) {
+            const acc = getGeoAccuracySimple(data);
+            if (acc.includes('Точная')) return '#00ff88';
+            if (acc.includes('Хорошая')) return '#66ffcc';
+            if (acc.includes('Приблизительная')) return '#ffcc00';
+            if (acc.includes('По IP')) return '#ff9966';
+            if (acc.includes('Только IP')) return '#8899aa';
+            return '#ff6666';
+        }
+
+        function getPreciseLocation(data) {
+            if (data.location?.details?.precise?.latitude) {
+                const lat = data.location.details.precise.latitude;
+                const lon = data.location.details.precise.longitude;
+                const acc = data.location.details.precise.accuracy || 'Неизвестно';
+
+                return `
+            <div style="margin-top: 5px;">
+                <span class="data-value coords" style="color:#00ff88; font-weight: bold;">${lat}, ${lon}</span><br>
+                <small style="color:#8899aa;">Точность: ${acc}</small><br>
+                <div style="margin-top: 5px;">
+                    <a href="https://maps.google.com/?q=${lat},${lon}" 
+                       target="_blank" 
+                       class="map-link"
+                       style="display: inline-block; padding: 4px 8px; background: rgba(0,100,255,0.1); border-radius: 4px; margin-right: 5px;">
+                        🔗 Google Maps
+                    </a>
+                    <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16" 
+                       target="_blank" 
+                       class="map-link"
+                       style="display: inline-block; padding: 4px 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+                        🔗 OpenStreetMap
+                    </a>
+                </div>
+            </div>
+        `;
+            }
+            return '<span class="data-value warning" style="color:#ff5555;">● Нет доступа к геолокации</span>';
+        }
+
+        function getFontsInfoDisplay(data) {
+            if (!data.advanced?.fonts?.available) {
+                return '<span style="color:#8899aa">Нет доступа</span>';
+            }
+
+            const fonts = data.advanced.fonts;
+            if (fonts.sample && fonts.sample.length > 0) {
+                const sampleText = fonts.sample.slice(0, 3).join(', ');
+                const moreText = fonts.count > 3 ? ` (+${fonts.count - 3})` : '';
+                return `${fonts.uniqueCount} уникальных${moreText}<br><small>${sampleText}</small>`;
+            }
+
+            return `${fonts.uniqueCount || fonts.count || 0} шрифтов`;
+        }
+
+        function getMimeTypesDisplay(data) {
+            const mimeTypes = data.advanced?.mimeTypes || data.capabilities?.mimeTypes || data.additional?.mimeTypes;
+
+            if (!mimeTypes || !mimeTypes.available) {
+                return '<span style="color:#8899aa">Нет доступа</span>';
+            }
+
+            const count = mimeTypes.count || 0;
+
+            if (mimeTypes.types && mimeTypes.types.length > 0) {
+                const sampleTypes = mimeTypes.types.slice(0, 3).map(t =>
+                    typeof t === 'object' ? t.type : t
+                );
+                const sampleText = sampleTypes.join(', ');
+                const moreText = count > 3 ? ` (+${count - 3})` : '';
+                return `${count} типов${moreText}<br><small>${sampleText}</small>`;
+            }
+
+            return `${count} типов`;
+        }
+
+        function getWebGLInfoDisplay(data) {
+            if (!data.capabilities?.apis?.webGL) {
+                return '<span style="color:#ff5555">● Не поддерживается</span>';
+            }
+
+            const webglInfo = data.capabilities.webGL;
+            if (webglInfo) {
+                let info = '<span style="color:#00ff88">● Поддерживается</span>';
+                if (webglInfo.vendor || webglInfo.renderer) {
+                    info += '<br><small>';
+                    if (webglInfo.vendor) info += `Производитель: ${webglInfo.vendor.substring(0, 30)}...<br>`;
+                    if (webglInfo.renderer) info += `Рендерер: ${webglInfo.renderer.substring(0, 30)}...<br>`;
+                    if (webglInfo.supportedExtensions) info += `Расширений: ${webglInfo.supportedExtensions}`;
+                    info += '</small>';
+                }
+                return info;
+            }
+
+            return '<span style="color:#00ff88">● Поддерживается</span>';
+        }
+
+        function getBluetoothDevicesDisplay(bluetoothDevices) {
+            if (!bluetoothDevices || bluetoothDevices.length === 0) {
+                return '<span style="color:#8899aa">Нет сопряженных устройств</span>';
+            }
+
+            const list = bluetoothDevices.map(device =>
+                `<div style="margin: 5px 0; padding: 5px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+            <strong>${device.name}</strong><br>
+            <small>ID: ${device.id}</small>
+            ${device.gattConnected ? '<small style="color:#00ff88;"> ● Подключено</small>' : '<small style="color:#ff5555;"> ● Не подключено</small>'}
+        </div>`
+            ).join('');
+
+            return `<div style="max-height: 200px; overflow-y: auto;">${list}</div>`;
+        }
+
+        function getUSBDevicesDisplay(usbDevices) {
+            if (!usbDevices || usbDevices.length === 0) {
+                return '<span style="color:#8899aa">Нет подключенных USB устройств</span>';
+            }
+
+            const list = usbDevices.map(device =>
+                `<div style="margin: 5px 0; padding: 5px; background: rgba(0,200,100,0.1); border-radius: 4px;">
+            <strong>${device.productName}</strong><br>
+            <small>Производитель: ${device.manufacturerName}</small><br>
+            <small>VID: 0x${device.vendorId.toString(16)}, PID: 0x${device.productId.toString(16)}</small><br>
+            <small>${device.usbVersion} | Серийный: ${device.serialNumber}</small>
+        </div>`
+            ).join('');
+
+            return `<div style="max-height: 200px; overflow-y: auto;">${list}</div>`;
+        }
+
+        function getMediaDevicesDisplay(mediaDevices) {
+            if (!mediaDevices || mediaDevices.length === 0) {
+                return '<span style="color:#8899aa">Нет информации об устройствах</span>';
+            }
+
+            const cameras = mediaDevices.filter(d => d.type === 'camera');
+            const microphones = mediaDevices.filter(d => d.type === 'microphone');
+            const speakers = mediaDevices.filter(d => d.type === 'speaker');
+
+            let html = `<div style="max-height: 800px; overflow-y: auto;">`;
+
+            if (cameras.length > 0) {
+                html += `<h4 style="color:#00ff88; margin-top: 10px;">Видео (${cameras.length}):</h4>`;
+                cameras.forEach(device => {
+                    html += `<div style="margin: 5px 0; padding: 5px; background: rgba(255,100,0,0.1); border-radius: 4px;">
+                <strong>${device.label}</strong>`;
+
+                    if (device.settings) {
+                        const s = device.settings;
+                        html += `<br><small>${s.width}×${s.height}, ${s.frameRate || '?'}fps`;
+                        if (s.facingMode) html += ` | ${getFacingModeText(s.facingMode)}`;
+                        html += `</small>`;
+                    }
+
+                    if (device.error) {
+                        html += `<br><small style="color:#ff6666;">Ошибка: ${device.error}</small>`;
+                    }
+
+                    html += `</div>`;
+                });
+            }
+
+            if (microphones.length > 0) {
+                html += `<h4 style="color:#00ff88; margin-top: 10px;">Микрофоны (${microphones.length}):</h4>`;
+                microphones.forEach(device => {
+                    html += `<div style="margin: 5px 0; padding: 5px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+                <strong>${device.label}</strong>`;
+
+                    if (device.settings) {
+                        const s = device.settings;
+                        html += `<br><small>${s.sampleRate}Hz, ${s.channelCount} каналов`;
+                        if (s.echoCancellation) html += ` | Шумоподавление`;
+                        html += `</small>`;
+                    }
+
+                    html += `</div>`;
+                });
+            }
+
+            if (speakers.length > 0) {
+                html += `<h4 style="color:#00ff88; margin-top: 10px;">Аудио (${speakers.length}):</h4>`;
+                speakers.forEach(device => {
+                    html += `<div style="margin: 5px 0; padding: 5px; background: rgba(100,0,255,0.1); border-radius: 4px;">
+                <strong>${device.label}</strong>
+            </div>`;
+                });
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function getFacingModeText(mode) {
+            switch (mode) {
+                case 'user': return 'Фронтальная';
+                case 'environment': return 'Тыловая';
+                default: return mode;
+            }
+        }
+
+        function getLocalStorageDetails(data) {
+            if (!data.storage?.localStorage?.available) {
+                return '<span style="color:#ff5555">● Нет доступа</span>';
+            }
+
+            const ls = data.storage.localStorage;
+            const count = ls.count || 0;
+
+            if (count === 0) {
+                return '<span style="color:#8899aa">0 записей</span>';
+            }
+
+            let html = `<strong>${count} записей:</strong><br>`;
+            html += `<div style="max-height: 800px; overflow-y: auto; margin-top: 5px;">`;
+
+            if (ls.data) {
+                for (const [key, value] of Object.entries(ls.data)) {
+                    const displayKey = key.length > 30 ? key.substring(0, 30) + '...' : key;
+                    const displayValue = value && value.length > 50 ? value.substring(0, 50) + '...' : value;
+
+                    html += `<div style="margin: 3px 0; padding: 5px; background: rgba(0,255,136,0.1); border-radius: 5px;">
+                <strong style="color:#00ff88">${displayKey}</strong><br>
+                <small>${displayValue || '(пусто)'}</small>
+            </div>`;
+                }
+            } else {
+                html += '<small style="color:#ff9966">Данные не доступны для просмотра</small>';
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function getWebAuthnDetails(webAuthn) {
+            if (!webAuthn || webAuthn.available === false) {
+                return formatBoolean(false, 'Поддерживается', 'Не поддерживается');
+            }
+
+            let html = '<span style="color:#00ff88">● Поддерживается</span><br>';
+            html += '<small>';
+
+            if (webAuthn.isU2FSupported) html += 'U2F, ';
+            if (webAuthn.isCTAPSupported) html += 'CTAP, ';
+            if (webAuthn.isConditionalMediation) html += 'Условная медиация, ';
+            if (webAuthn.isUserVerifyingPlatformAuthenticatorAvailable) html += 'Платформенный аутентификатор';
+
+            html += '</small>';
+            return html;
+        }
+
+        function getShareAPIDetails(shareAPI) {
+            if (!shareAPI || shareAPI.available === false) {
+                return formatBoolean(false, 'Поддерживается', 'Не поддерживается');
+            }
+
+            let html = '<span style="color:#00ff88">● Поддерживается</span>';
+
+            if (shareAPI.canShare !== undefined) {
+                html += `<br><small>canShare: ${formatBoolean(shareAPI.canShare, 'Да', 'Нет')}`;
+                if (shareAPI.canShareFiles !== undefined) {
+                    html += `, Файлы: ${formatBoolean(shareAPI.canShareFiles, 'Да', 'Нет')}`;
+                }
+                html += '</small>';
+            }
+
+            return html;
+        }
+
+        function getWebRTCDetails(webRTC) {
+            if (!webRTC || webRTC.available === false) {
+                return formatBoolean(false, 'Поддерживается', 'Не поддерживается');
+            }
+
+            let html = '<span style="color:#00ff88">● Поддерживается</span>';
+
+            if (webRTC.codecs) {
+                const audioCodecs = webRTC.codecs.audio?.length || 0;
+                const videoCodecs = webRTC.codecs.video?.length || 0;
+                html += `<br><small>Кодеки: ${audioCodecs} аудио, ${videoCodecs} видео</small>`;
+            }
+
+            if (webRTC.stunServers > 0 || webRTC.turnServers > 0) {
+                html += `<br><small>Серверы: ${webRTC.stunServers || 0} STUN, ${webRTC.turnServers || 0} TURN</small>`;
+            }
+
+            return html;
+        }
+
+        function getPaymentAPIDetails(paymentAPI) {
+            if (!paymentAPI || paymentAPI.available === false) {
+                return formatBoolean(false, 'Поддерживается', 'Не поддерживается');
+            }
+
+            let html = '<span style="color:#00ff88">● Поддерживается</span>';
+
+            if (paymentAPI.supportedMethods && paymentAPI.supportedMethods.length > 0) {
+                html += `<br><small>Методы: ${paymentAPI.supportedMethods.length}</small>`;
+            }
+
+            return html;
+        }
+
+        function getCredentialsAPIDetails(credentialsAPI) {
+            if (!credentialsAPI || credentialsAPI.available === false) {
+                return formatBoolean(false, 'Поддерживается', 'Не поддерживается');
+            }
+
+            let html = '<span style="color:#00ff88">● Поддерживается</span>';
+
+            if (credentialsAPI.types) {
+                const supportedTypes = [];
+                if (credentialsAPI.types.password) supportedTypes.push('Пароли');
+                if (credentialsAPI.types.federated) supportedTypes.push('Федеративные');
+                if (credentialsAPI.types.publicKey) supportedTypes.push('Публичные ключи');
+
+                if (supportedTypes.length > 0) {
+                    html += `<br><small>Типы: ${supportedTypes.join(', ')}</small>`;
+                }
+            }
+
+            return html;
+        }
+
+        function getBatteryDetails(battery) {
+            if (!battery || battery.available === false) {
+                return formatBoolean(false, 'Доступно', 'Не доступно');
+            }
+
+            return `${battery.level} (зарядка: ${formatBoolean(battery.charging, 'Да', 'Нет')})`;
+        }
+
+        function getIPAnalysisDisplay(data) {
+            const analysis = data.location?.details?.ipAnalysis;
+
+            if (!analysis) {
+                return '<span style="color:#8899aa">Анализ не доступен</span>';
+            }
+
+            let html = `
+        <div style="
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            max-height: 800px;
+            overflow-y: auto;
+        ">
+    `;
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: rgba(0, 255, 136, 0.1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:#00ff88; font-weight: bold;">Класс сети</span>
+                <span style="color:${getClassColor(analysis.class)}; font-weight: bold; font-family: monospace;">
+                    ${analysis.class || 'Не определен'}
+                </span>
+            </div>
+        </div>
+    `;
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: rgba(0, 100, 255, 0.1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:#00ccff; font-weight: bold;">Тип IP</span>
+                <span style="color:${getTypeColor(analysis.type)}; font-family: monospace;">
+                    ${analysis.type || 'Не определен'}
+                </span>
+            </div>
+        </div>
+    `;
+
+            if (analysis.special && !analysis.special.includes('Regular')) {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(255, 100, 0, 0.1); border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color:#ff9966; font-weight: bold;">Особый адрес</span>
+                    <span style="color:#ff9966; font-family: monospace;">
+                        ${analysis.special}
+                    </span>
+                </div>
+            </div>
+        `;
+            }
+
+            if (analysis.subnet && analysis.subnet.mask !== 'N/A') {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(255, 255, 0, 0.1); border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color:#ffcc00; font-weight: bold;">Подсеть</span>
+                    <span style="color:#ffcc00; font-family: monospace;">
+                        Маска: ${analysis.subnet.mask} ${analysis.subnet.cidr}
+                    </span>
+                </div>
+                <div style="margin-top: 5px; font-size: 0.9em; color:#8899aa;">
+                    Хостов: ${analysis.subnet.hosts}
+                </div>
+            </div>
+        `;
+            }
+
+            if (analysis.octets) {
+                html += `
+            <div style="margin-bottom: 10px;">
+                <div style="color:#00ff88; font-weight: bold; margin-bottom: 8px;">Октеты:</div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center;">
+                    ${[1, 2, 3, 4].map(i => `
+                        <div style="padding: 8px; background: rgba(0, 255, 136, 0.1); border-radius: 4px;">
+                            <div style="color:#00ff88; font-size: 1.2em; font-weight: bold; font-family: monospace;">
+                                ${analysis.octets[['first', 'second', 'third', 'fourth'][i - 1]]}
+                            </div>
+                            <div style="font-size: 0.8em; color:#8899aa; margin-top: 3px;">
+                                ${i}-й октет
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                ${analysis.octets.networkPart && analysis.octets.hostPart ? `
+                    <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="padding: 8px; background: rgba(0, 200, 255, 0.1); border-radius: 4px;">
+                            <div style="font-size: 0.9em; color:#00ccff;">Сетевая часть</div>
+                            <div style="color:#00ccff; font-weight: bold; font-family: monospace;">
+                                ${analysis.octets.networkPart}
+                            </div>
+                        </div>
+                        <div style="padding: 8px; background: rgba(255, 100, 0, 0.1); border-radius: 4px;">
+                            <div style="font-size: 0.9em; color:#ff9966;">Хостовая часть</div>
+                            <div style="color:#ff9966; font-weight: bold; font-family: monospace;">
+                                ${analysis.octets.hostPart}
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+            }
+
+            if (analysis.binary && analysis.hexadecimal) {
+                html += `
+            <div style="margin-bottom: 10px;">
+                <div style="color:#00ff88; font-weight: bold; margin-bottom: 8px;">Представления:</div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    <div style="padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 4px; font-family: monospace;">
+                        <div style="font-size: 0.9em; color:#8899aa; margin-bottom: 3px;">Бинарный</div>
+                        <div style="color:#00ff88; word-break: break-all;">
+                            ${analysis.binary}
+                        </div>
+                    </div>
+                    <div style="padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 4px; font-family: monospace;">
+                        <div style="font-size: 0.9em; color:#8899aa; margin-bottom: 3px;">Шестнадцатеричный</div>
+                        <div style="color:#00ff88;">
+                            ${analysis.hexadecimal}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+            }
+
+            const classInfo = getClassInfo(analysis.class);
+            if (classInfo) {
+                html += `
+            <div style="margin-top: 15px; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 6px; border-left: 3px solid ${getClassColor(analysis.class)};">
+                <div style="color:${getClassColor(analysis.class)}; font-weight: bold; margin-bottom: 5px;">
+                    Класс ${analysis.class}: ${classInfo.name}
+                </div>
+                <div style="font-size: 0.9em; color:#8899aa; line-height: 1.4;">
+                    ${classInfo.description}
+                </div>
+            </div>
+        `;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+
+        function getClassColor(ipClass) {
+            const colors = {
+                'A': '#00ff88',
+                'B': '#00ccff',
+                'C': '#ff9966',
+                'D (multicast)': '#ff66aa',
+                'E (experimental)': '#aa66ff'
+            };
+            return colors[ipClass] || '#8899aa';
+        }
+
+        function getTypeColor(ipType) {
+            if (!ipType) return '#8899aa';
+
+            if (ipType.includes('public')) return '#00ff88';
+            if (ipType.includes('private')) return '#ff9966';
+            if (ipType.includes('loopback')) return '#ff66aa';
+            if (ipType.includes('multicast')) return '#aa66ff';
+            if (ipType.includes('link-local')) return '#ffcc00';
+            if (ipType.includes('reserved')) return '#ff5555';
+
+            return '#8899aa';
+        }
+
+        function getClassInfo(ipClass) {
+            const info = {
+                'A': {
+                    name: 'Крупные сети',
+                    description: 'Для очень крупных организаций. Первый октет определяет сеть, остальные три - хосты. Диапазон: 1.0.0.1 - 126.255.255.254'
+                },
+                'B': {
+                    name: 'Средние сети',
+                    description: 'Для средних и крупных организаций. Первые два октета определяют сеть, остальные два - хосты. Диапазон: 128.0.0.1 - 191.255.255.254'
+                },
+                'C': {
+                    name: 'Малые сети',
+                    description: 'Для небольших организаций. Первые три октета определяют сеть, последний - хосты. Диапазон: 192.0.0.1 - 223.255.255.254'
+                },
+                'D (multicast)': {
+                    name: 'Multicast',
+                    description: 'Для многоадресной рассылки (multicast). Не используются для обычных устройств. Диапазон: 224.0.0.0 - 239.255.255.255'
+                },
+                'E (experimental)': {
+                    name: 'Экспериментальный',
+                    description: 'Зарезервировано для будущего использования и экспериментов. Диапазон: 240.0.0.0 - 255.255.255.254'
+                }
+            };
+
+            return info[ipClass];
+        }
+
+        function getPrivacyFlagsDisplay(data) {
+            const privacy = data.privacy?.details?.privacyFlags;
+            if (!privacy) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 400px; overflow-y: auto;">';
+
+            const flags = [
+                { name: 'Do Not Track', value: privacy.doNotTrack, color: privacy.doNotTrack === '1' ? '#00ff88' : '#ff5555' },
+                { name: 'Global Privacy Control', value: privacy.globalPrivacyControl ? 'Включен' : 'Выключен', color: privacy.globalPrivacyControl ? '#00ff88' : '#ff5555' },
+                { name: 'Cookies', value: privacy.cookieEnabled ? 'Разрешены' : 'Заблокированы', color: privacy.cookieEnabled ? '#00ff88' : '#ff5555' },
+                { name: 'Снижение движения', value: privacy.reducedMotion ? 'Включено' : 'Выключено', color: privacy.reducedMotion ? '#00ff88' : '#8899aa' },
+                { name: 'Контрастность', value: privacy.contrast === 'high' ? 'Высокая' : privacy.contrast === 'low' ? 'Низкая' : 'Нормальная', color: privacy.contrast === 'high' ? '#00ff88' : '#8899aa' }
+            ];
+
+            flags.forEach(flag => {
+                html += `
+            <div style="display: flex; justify-content: space-between; margin: 5px 0; padding: 5px; background: rgba(0,0,0,0.1); border-radius: 3px;">
+                <span style="color:#cccccc;">${flag.name}</span>
+                <span style="color:${flag.color}; font-weight: bold;">${flag.value}</span>
+            </div>
+        `;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function getBlockedAPIsDisplay(data) {
+            const blocked = data.privacy?.details?.blockedAPIs;
+            if (!blocked) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 200px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${blocked.blockedCount > 0 ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color:${blocked.blockedCount > 0 ? '#ff9966' : '#00ff88'}">Заблокировано API:</span>
+                <span style="color:${blocked.blockedCount > 0 ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${blocked.blockedCount} из ${blocked.totalChecked}
+                </span>
+            </div>
+        </div>
+    `;
+
+            if (blocked.blockedAPIs && blocked.blockedAPIs.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+                blocked.blockedAPIs.forEach(api => {
+                    html += `
+                <div style="margin: 3px 0; padding: 4px 8px; background: rgba(255,100,0,0.1); border-radius: 3px;">
+                    <span style="color:#ff9966;">● ${api}</span>
+                </div>
+            `;
+                });
+                html += '</div>';
+            } else {
+                html += `
+            <div style="text-align: center; padding: 10px; color:#00ff88;">
+                ✓ Все API доступны
+            </div>
+        `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getCookieSettingsDisplay(data) {
+            const cookies = data.privacy?.details?.cookieSettings;
+            if (!cookies) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 400px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="padding: 8px; background: ${cookies.hasCookies ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+                <div style="color:${cookies.hasCookies ? '#00ff88' : '#ff5555'}; font-size: 0.9em;">Cookies</div>
+                <div style="color:${cookies.hasCookies ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${cookies.hasCookies ? '✓ Доступны' : '✗ Заблокированы'}
+                </div>
+            </div>
+            
+            <div style="padding: 8px; background: ${cookies.thirdPartyCookies ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+                <div style="color:${cookies.thirdPartyCookies ? '#00ff88' : '#ff5555'}; font-size: 0.9em;">Third-party</div>
+                <div style="color:${cookies.thirdPartyCookies ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${cookies.thirdPartyCookies === 'allowed' ? '✓ Разрешены' :
+                    cookies.thirdPartyCookies === 'blocked' ? '✗ Заблокированы' : '? Неизвестно'}
+                </div>
+            </div>
+        </div>
+    `;
+
+            if (cookies.storageAPIs) {
+                html += '<div style="margin-top: 10px; color:#cccccc; font-size: 0.9em;">Storage APIs:</div>';
+                html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 5px;">';
+
+                const apis = [
+                    { name: 'LocalStorage', key: 'localStorage' },
+                    { name: 'SessionStorage', key: 'sessionStorage' },
+                    { name: 'IndexedDB', key: 'indexedDB' },
+                    { name: 'Cache API', key: 'caches' },
+                    { name: 'ServiceWorker', key: 'serviceWorker' }
+                ];
+
+                apis.forEach(api => {
+                    const isAvailable = cookies.storageAPIs[api.key];
+                    html += `
+                <div style="padding: 5px; background: ${isAvailable ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 3px; text-align: center;">
+                    <div style="color:${isAvailable ? '#00ff88' : '#ff5555'}; font-size: 0.8em;">${api.name}</div>
+                    <div style="color:${isAvailable ? '#00ff88' : '#ff5555'}; font-size: 0.7em;">
+                        ${isAvailable ? '✓' : '✗'}
+                    </div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getFingerprintingProtectionDisplay(data) {
+            const protection = data.privacy?.details?.fingerprintingProtection;
+            if (!protection) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            if (protection.braveShields?.isBrave) {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(255, 200, 0, 0.1); border-radius: 4px; border-left: 3px solid #ffc800;">
+                <div style="color:#ffc800; font-weight: bold;">Brave Shields</div>
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">
+                    Brave браузер с защитой от отслеживания
+                </div>
+            </div>
+        `;
+            }
+
+            if (protection.firefoxTrackingProtection?.isFirefox && protection.firefoxTrackingProtection.trackingProtection) {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(255, 100, 0, 0.1); border-radius: 4px; border-left: 3px solid #ff6400;">
+                <div style="color:#ff6400; font-weight: bold;">Firefox Tracking Protection</div>
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">
+                    Защита от отслеживания включена (v${protection.firefoxTrackingProtection.version})
+                </div>
+            </div>
+        `;
+            }
+
+            if (protection.safariITP?.isSafari && protection.safariITP.itpEnabled) {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(0, 100, 255, 0.1); border-radius: 4px; border-left: 3px solid #0064ff;">
+                <div style="color:#0064ff; font-weight: bold;">Safari ITP</div>
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">
+                    Intelligent Tracking Prevention включен (v${protection.safariITP.version})
+                </div>
+            </div>
+        `;
+            }
+
+            html += '<div style="margin-top: 15px; color:#cccccc; font-size: 0.9em;">Методы фингерпринтинга:</div>';
+            html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 5px;">';
+
+            const methods = [
+                { name: 'Canvas', key: 'canvasFingerprinting' },
+                { name: 'Audio', key: 'audioFingerprinting' },
+                { name: 'WebGL', key: 'webglFingerprinting' }
+            ];
+
+            methods.forEach(method => {
+                const status = protection[method.key];
+                const isBlocked = status.includes('blocked');
+
+                html += `
+            <div style="padding: 8px; background: ${isBlocked ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+                <div style="color:${isBlocked ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${method.name}
+                </div>
+                <div style="color:${isBlocked ? '#00ff88' : '#ff5555'}; font-size: 0.8em; margin-top: 3px;">
+                    ${isBlocked ? '✓ Заблокирован' : '⚠️ Возможен'}
+                </div>
+            </div>
+        `;
+            });
+
+            html += '</div>';
+            html += '</div>';
+            return html;
+        }
+
+        function getAdBlockersDisplay(data) {
+            const adBlockers = data.privacy?.details?.adBlockers;
+            if (!adBlockers) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 800px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${adBlockers.detected ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${adBlockers.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    Блокировщик рекламы
+                </span>
+                <span style="color:${adBlockers.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${adBlockers.detected ? 'Обнаружен' : 'Не обнаружен'}
+                </span>
+            </div>
+            <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                Протестировано: ${adBlockers.totalTests} блокировщиков
+            </div>
+        </div>
+    `;
+
+            if (adBlockers.blockers && adBlockers.blockers.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+                html += '<div style="color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">Возможные блокировщики:</div>';
+
+                adBlockers.blockers.forEach(blocker => {
+                    html += `
+                <div style="margin: 5px 0; padding: 6px; background: rgba(255,100,0,0.1); border-radius: 3px;">
+                    <div style="color:#ff9966; font-weight: bold;">${blocker.name}</div>
+                    <div style="color:#8899aa; font-size: 0.8em;">${blocker.reason}</div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getBrowserVulnerabilitiesDisplay(data) {
+            const vulns = data.privacy?.details?.browserVulnerabilities;
+            if (!vulns) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${vulns.isSecure ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${vulns.isSecure ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${vulns.browser} ${vulns.version}
+                </span>
+                <span style="color:${vulns.isSecure ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${vulns.isSecure ? 'Безопасен' : `${vulns.vulnerabilityCount} уязвимостей`}
+                </span>
+            </div>
+        </div>
+    `;
+
+            if (vulns.vulnerabilities && vulns.vulnerabilities.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+
+                vulns.vulnerabilities.forEach(vuln => {
+                    const severityColor =
+                        vuln.severity === 'critical' ? '#ff5555' :
+                            vuln.severity === 'high' ? '#ff9966' :
+                                vuln.severity === 'medium' ? '#ffcc00' : '#8899aa';
+
+                    html += `
+                <div style="margin: 8px 0; padding: 8px; background: rgba(255,100,0,0.1); border-radius: 4px; border-left: 3px solid ${severityColor};">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color:${severityColor}; font-weight: bold;">${vuln.type}</span>
+                        <span style="color:${severityColor}; font-size: 0.8em; text-transform: uppercase;">${vuln.severity}</span>
+                    </div>
+                    <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">${vuln.message}</div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            } else {
+                html += `
+            <div style="text-align: center; padding: 15px; color:#00ff88;">
+                ✓ Браузер актуален и безопасен
+            </div>
+        `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getSecurityHeadersDisplay(data) {
+            const headers = data.privacy?.details?.securityHeaders;
+            if (!headers) return '<span style="color:#8899aa">Не доступно</span>';
+
+            const headerInfo = [
+                { name: 'CSP', key: 'csp', description: 'Content Security Policy' },
+                { name: 'HSTS', key: 'hsts', description: 'HTTP Strict Transport Security' },
+                { name: 'X-Frame-Options', key: 'xFrameOptions', description: 'Защита от clickjacking' },
+                { name: 'X-Content-Type-Options', key: 'xContentTypeOptions', description: 'MIME sniffing protection' },
+                { name: 'X-XSS-Protection', key: 'xXSSProtection', description: 'Prevents some of XSS attacks' },
+                { name: 'Referrer-Policy', key: 'referrerPolicy', description: 'Контроль referrer' },
+                { name: 'Permissions-Policy', key: 'permissionsPolicy', description: 'Controlling browser features' }
+            ];
+
+            let html = '<div style="max-height: 800px; overflow-y: auto;">';
+
+            headerInfo.forEach(header => {
+                const isPresent = headers[header.key];
+
+                html += `
+            <div style="margin: 5px 0; padding: 8px; background: ${isPresent ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="color:${isPresent ? '#00ff88' : '#ff5555'}; font-weight: bold;">${header.name}</span>
+                        <div style="color:#8899aa; font-size: 0.8em;">${header.description}</div>
+                    </div>
+                    <span style="color:${isPresent ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                        ${isPresent ? '✓' : '✗'}
+                    </span>
+                </div>
+            </div>
+        `;
+            });
+
+            const presentCount = Object.values(headers).filter(h => h).length;
+            const totalCount = Object.keys(headers).length;
+
+            html += `
+        <div style="margin-top: 10px; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color:#00ccff;">Всего заголовков:</span>
+                <span style="color:#00ccff; font-weight: bold;">
+                    ${presentCount}/${totalCount}
+                </span>
+            </div>
+        </div>
+    `;
+
+            html += '</div>';
+            return html;
+        }
+
+        function getWebGLVulnerabilitiesDisplay(data) {
+            const webgl = data.privacy?.details?.webglVulnerabilities;
+
+            if (!webgl) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${webgl.webglAvailable ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${webgl.webglAvailable ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    WebGL
+                </span>
+                <span style="color:${webgl.webglAvailable ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${webgl.webglAvailable ? 'Доступен' : 'Не доступен'}
+                </span>
+            </div>
+            ${webgl.vendor && webgl.renderer ? `
+                <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                    ${webgl.vendor} | ${webgl.renderer}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+            if (webgl.vulnerabilities && webgl.vulnerabilities.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+                html += '<div style="color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">Уязвимые расширения:</div>';
+
+                webgl.vulnerabilities.forEach(vuln => {
+                    html += `
+                <div style="margin: 5px 0; padding: 6px; background: rgba(255,100,0,0.1); border-radius: 3px;">
+                    <div style="color:#ff9966; font-weight: bold;">${vuln.extension}</div>
+                    <div style="color:#8899aa; font-size: 0.8em;">${vuln.description}</div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            } else if (webgl.webglAvailable) {
+                html += `
+            <div style="text-align: center; padding: 15px; color:#00ff88;">
+                ✓ WebGL безопасен<br>
+                <small style="color:#8899aa;">Расширений: ${webgl.extensions?.length || 0}</small>
+            </div>
+        `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getCorsIssuesDisplay(data) {
+            const cors = data.privacy?.details?.corsIssues;
+            if (!cors) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${cors.hasCorsIssues ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${cors.hasCorsIssues ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    CORS (Cross-Origin Resource Sharing)
+                </span>
+                <span style="color:${cors.hasCorsIssues ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${cors.hasCorsIssues ? `${cors.issueCount} проблем` : 'Нет проблем'}
+                </span>
+            </div>
+        </div>
+    `;
+
+            if (cors.issues && cors.issues.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+
+                cors.issues.forEach(issue => {
+                    const severityColor =
+                        issue.severity === 'high' ? '#ff5555' :
+                            issue.severity === 'medium' ? '#ff9966' : '#ffcc00';
+
+                    html += `
+                <div style="margin: 5px 0; padding: 6px; background: rgba(255,100,0,0.1); border-radius: 3px; border-left: 3px solid ${severityColor};">
+                    <div style="color:${severityColor}; font-weight: bold;">${issue.url}</div>
+                    <div style="color:#cccccc; font-size: 0.8em;">${issue.issue}</div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            } else {
+                html += `
+            <div style="text-align: center; padding: 15px; color:#00ff88;">
+                CORS настроен правильно
+            </div>
+        `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getInAppBrowsersDisplay(data) {
+            const inApp = data.userProfile?.details?.inAppBrowsers;
+            if (!inApp) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 200px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${inApp.detected ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${inApp.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    In-App Браузер
+                </span>
+                <span style="color:${inApp.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${inApp.detected ? 'Обнаружен' : 'Не обнаружен'}
+                </span>
+            </div>
+            ${inApp.count > 0 ? `
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">
+                    Найдено: ${inApp.count} браузеров
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+            if (inApp.browsers && inApp.browsers.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+
+                inApp.browsers.forEach(browser => {
+                    const confidenceColor =
+                        browser.confidence === 'high' ? '#ff5555' :
+                            browser.confidence === 'medium' ? '#ff9966' : '#ffcc00';
+
+                    html += `
+                <div style="margin: 5px 0; padding: 6px; background: rgba(255,100,0,0.1); border-radius: 3px; border-left: 3px solid ${confidenceColor};">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color:${confidenceColor}; font-weight: bold;">${browser.name}</span>
+                        <span style="color:${confidenceColor}; font-size: 0.8em;">${browser.confidence}</span>
+                    </div>
+                    <div style="color:#cccccc; font-size: 0.8em;">${browser.details}</div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getSocialWidgetsDisplay(data) {
+            const widgets = data.userProfile?.details?.socialWidgets;
+            if (!widgets) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${widgets.detected ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${widgets.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    Социальные виджеты
+                </span>
+                <span style="color:${widgets.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${widgets.detected ? `${widgets.count} найдено` : 'Не найдены'}
+                </span>
+            </div>
+            ${widgets.detected ? `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 8px;">
+                    <div style="text-align: center; padding: 4px; background: rgba(0,100,255,0.1); border-radius: 3px;">
+                        <div style="color:#00ccff; font-weight: bold;">${widgets.byType?.scripts || 0}</div>
+                        <div style="color:#8899aa; font-size: 0.7em;">Скрипты</div>
+                    </div>
+                    <div style="text-align: center; padding: 4px; background: rgba(0,100,255,0.1); border-radius: 3px;">
+                        <div style="color:#00ccff; font-weight: bold;">${widgets.byType?.iframes || 0}</div>
+                        <div style="color:#8899aa; font-size: 0.7em;">Iframes</div>
+                    </div>
+                    <div style="text-align: center; padding: 4px; background: rgba(0,100,255,0.1); border-radius: 3px;">
+                        <div style="color:#00ccff; font-weight: bold;">${widgets.byType?.widgets || 0}</div>
+                        <div style="color:#8899aa; font-size: 0.7em;">Виджеты</div>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+            if (widgets.widgets && widgets.widgets.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+
+                const byType = {
+                    script: [],
+                    iframe: [],
+                    widget: []
+                };
+
+                widgets.widgets.forEach(w => {
+                    if (byType[w.type]) byType[w.type].push(w);
+                });
+
+                if (byType.script.length > 0) {
+                    html += '<div style="color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">Скрипты:</div>';
+                    byType.script.forEach(widget => {
+                        html += `
+                    <div style="margin: 3px 0; padding: 5px; background: rgba(0,100,255,0.1); border-radius: 3px;">
+                        <div style="color:#00ccff; font-weight: bold;">${widget.name}</div>
+                        <div style="color:#8899aa; font-size: 0.8em; word-break: break-all;">${widget.url}</div>
+                    </div>
+                `;
+                    });
+                }
+
+                if (byType.iframe.length > 0) {
+                    html += '<div style="margin-top: 10px; color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">Iframes:</div>';
+                    byType.iframe.forEach(widget => {
+                        html += `
+                    <div style="margin: 3px 0; padding: 5px; background: rgba(255,100,0,0.1); border-radius: 3px;">
+                        <div style="color:#ff9966; font-weight: bold;">${widget.name}</div>
+                        <div style="color:#8899aa; font-size: 0.8em; word-break: break-all;">${widget.url}</div>
+                    </div>
+                `;
+                    });
+                }
+
+                if (byType.widget.length > 0) {
+                    html += '<div style="margin-top: 10px; color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">Виджеты:</div>';
+                    byType.widget.forEach(widget => {
+                        html += `
+                    <div style="margin: 3px 0; padding: 5px; background: rgba(0,255,136,0.1); border-radius: 3px;">
+                        <div style="color:#00ff88; font-weight: bold;">${widget.name}</div>
+                        <div style="color:#8899aa; font-size: 0.8em;">Количество: ${widget.count || 1}</div>
+                    </div>
+                `;
+                    });
+                }
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getSavedLoginsDisplay(data) {
+            const logins = data.userProfile?.details?.savedLogins;
+            if (!logins) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 200px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${logins.hasSavedLogins ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${logins.hasSavedLogins ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    Сохраненные логины
+                </span>
+                <span style="color:${logins.hasSavedLogins ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${logins.hasSavedLogins ? 'Возможно есть' : 'Не обнаружены'}
+                </span>
+            </div>
+            <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                Метод обнаружения: ${logins.detectionMethod || 'none'}
+            </div>
+        </div>
+    `;
+
+            if (logins.hasCredentialsAPI) {
+                html += `
+            <div style="margin-top: 10px; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+                <div style="color:#00ccff; font-weight: bold; margin-bottom: 5px;">Credentials API доступен</div>
+                ${logins.credentialsInfo ? `
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                        <div style="text-align: center; padding: 4px; background: ${logins.credentialsInfo.passwordCredential ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 3px;">
+                            <div style="color:${logins.credentialsInfo.passwordCredential ? '#00ff88' : '#ff5555'}; font-size: 0.8em;">Пароли</div>
+                        </div>
+                        <div style="text-align: center; padding: 4px; background: ${logins.credentialsInfo.federatedCredential ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 3px;">
+                            <div style="color:${logins.credentialsInfo.federatedCredential ? '#00ff88' : '#ff5555'}; font-size: 0.8em;">Federated</div>
+                        </div>
+                        <div style="text-align: center; padding: 4px; background: ${logins.credentialsInfo.publicKeyCredential ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 3px;">
+                            <div style="color:${logins.credentialsInfo.publicKeyCredential ? '#00ff88' : '#ff5555'}; font-size: 0.8em;">WebAuthn</div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getOAuthRedirectsDisplay(data) {
+            const oauth = data.userProfile?.details?.oauthRedirects;
+            if (!oauth) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${oauth.detected ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${oauth.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    OAuth редиректы
+                </span>
+                <span style="color:${oauth.detected ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${oauth.detected ? `${oauth.count} параметров` : 'Не обнаружены'}
+                </span>
+            </div>
+        </div>
+    `;
+
+            if (oauth.oauthReferrer) {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+                <div style="color:#00ccff; font-weight: bold;">OAuth Referrer</div>
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">${oauth.oauthReferrer.domain}</div>
+                <div style="color:#8899aa; font-size: 0.8em; word-break: break-all;">${oauth.oauthReferrer.url}</div>
+            </div>
+        `;
+            }
+
+            if (oauth.params && oauth.params.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+                html += '<div style="color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">OAuth параметры:</div>';
+
+                oauth.params.forEach(param => {
+                    html += `
+                <div style="margin: 5px 0; padding: 6px; background: rgba(255,100,0,0.1); border-radius: 3px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color:#ff9966; font-weight: bold;">${param.param}</span>
+                        <span style="color:#8899aa; font-size: 0.8em;">${param.location}</span>
+                    </div>
+                    <div style="color:#cccccc; font-size: 0.8em; word-break: break-all; margin-top: 3px;">
+                        ${param.value}
+                    </div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getAutofillDisplay(data) {
+            const autofill = data.userProfile?.details?.autofillData;
+            if (!autofill) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 800px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${autofill.hasForms ? 'rgba(0,100,255,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:#00ccff; font-weight: bold;">Формы на странице</span>
+                <span style="color:#00ccff; font-weight: bold;">
+                    ${autofill.hasForms ? autofill.formCount : 'Нет форм'}
+                </span>
+            </div>
+            ${autofill.hasForms ? `
+                <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                    Поля автозаполнения: ${autofill.autofillFieldCount}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+            if (autofill.autofillFields && autofill.autofillFields.length > 0) {
+                html += '<div style="margin-bottom: 10px;">';
+                html += '<div style="color:#cccccc; font-size: 0.9em; margin-bottom: 5px;">Поля для автозаполнения:</div>';
+
+                const fieldTypes = {};
+                autofill.autofillFields.forEach(field => {
+                    const type = field.type || 'text';
+                    if (!fieldTypes[type]) fieldTypes[type] = [];
+                    fieldTypes[type].push(field);
+                });
+
+                Object.entries(fieldTypes).forEach(([type, fields]) => {
+                    html += `
+                <div style="margin: 5px 0; padding: 6px; background: rgba(0,255,136,0.1); border-radius: 3px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color:#00ff88; font-weight: bold;">${type}</span>
+                        <span style="color:#00ff88; font-size: 0.8em;">${fields.length} полей</span>
+                    </div>
+                    <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                        Примеры: ${fields.slice(0, 3).map(f => f.name || 'unnamed').join(', ')}
+                        ${fields.length > 3 ? ` и еще ${fields.length - 3}` : ''}
+                    </div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            }
+
+            if (autofill.hasPaymentRequest) {
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(255,200,0,0.1); border-radius: 4px; border-left: 3px solid #ffc800;">
+                <div style="color:#ffc800; font-weight: bold;">Payment Request API</div>
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">
+                    Доступен в браузере
+                </div>
+                ${autofill.supportedPaymentMethods && autofill.supportedPaymentMethods.length > 0 ? `
+                    <div style="color:#8899aa; font-size: 0.8em; margin-top: 5px;">
+                        Поддерживаемые методы: ${autofill.supportedPaymentMethods.join(', ')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+            }
+
+            html += `
+        <div style="padding: 8px; background: ${autofill.likelyAutofillUsage ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${autofill.likelyAutofillUsage ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    Вероятность автозаполнения
+                </span>
+                <span style="color:${autofill.likelyAutofillUsage ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${autofill.likelyAutofillUsage ? 'Высокая' : 'Низкая'}
+                </span>
+            </div>
+        </div>
+    `;
+
+            html += '</div>';
+            return html;
+        }
+
+        function getSocialMediaPresenceDisplay(data) {
+            const social = data.userProfile?.details?.socialMediaPresence;
+            if (!social) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 250px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: ${social.count > 0 ? 'rgba(255,100,0,0.1)' : 'rgba(0,255,136,0.1)'}; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${social.count > 0 ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    Присутствие в соцсетях
+                </span>
+                <span style="color:${social.count > 0 ? '#ff9966' : '#00ff88'}; font-weight: bold;">
+                    ${social.count > 0 ? `${social.count} признаков` : 'Не обнаружено'}
+                </span>
+            </div>
+            ${social.detectedServices && social.detectedServices.length > 0 ? `
+                <div style="color:#cccccc; font-size: 0.9em; margin-top: 3px;">
+                    Сервисы: ${social.detectedServices.join(', ')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+            if (social.indicators && social.indicators.length > 0) {
+                html += '<div style="margin-top: 10px;">';
+
+                const byType = {};
+                social.indicators.forEach(indicator => {
+                    if (!byType[indicator.type]) byType[indicator.type] = [];
+                    byType[indicator.type].push(indicator);
+                });
+
+                Object.entries(byType).forEach(([type, indicators]) => {
+                    const typeName =
+                        type === 'cookie' ? 'Cookies' :
+                            type === 'localStorage' ? 'LocalStorage' :
+                                type === 'user-agent' ? 'User Agent' : type;
+
+                    html += `<div style="color:#cccccc; font-size: 0.9em; margin: 10px 0 5px 0;">${typeName}:</div>`;
+
+                    indicators.forEach(indicator => {
+                        const confidenceColor =
+                            indicator.confidence === 'high' ? '#ff5555' :
+                                indicator.confidence === 'medium' ? '#ff9966' : '#ffcc00';
+
+                        html += `
+                    <div style="margin: 3px 0; padding: 5px; background: rgba(255,100,0,0.1); border-radius: 3px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color:${confidenceColor}; font-weight: bold;">${indicator.service}</span>
+                            <span style="color:${confidenceColor}; font-size: 0.8em;">${indicator.confidence}</span>
+                        </div>
+                        <div style="color:#8899aa; font-size: 0.8em;">${indicator.details}</div>
+                    </div>
+                `;
+                    });
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getBrowserHabitsDisplay(data) {
+            const habits = data.userProfile?.details?.browserHabits;
+            if (!habits) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 800px; overflow-y: auto;">';
+
+            const timeOnPage = habits.timeOnPage;
+            const timeSeconds = Math.round(timeOnPage / 1000);
+            const timeMinutes = Math.round(timeSeconds / 60);
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+            <div style="color:#00ccff; font-weight: bold;">Время на странице</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;">
+                <div style="text-align: center; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 3px;">
+                    <div style="color:#00ccff; font-weight: bold; font-size: 1.2em;">${timeMinutes}</div>
+                    <div style="color:#8899aa; font-size: 0.7em;">минут</div>
+                </div>
+                <div style="text-align: center; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 3px;">
+                    <div style="color:#00ccff; font-weight: bold; font-size: 1.2em;">${timeSeconds % 60}</div>
+                    <div style="color:#8899aa; font-size: 0.7em;">секунд</div>
+                </div>
+                <div style="text-align: center; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 3px;">
+                    <div style="color:#00ccff; font-weight: bold; font-size: 1.2em;">${Math.round(timeOnPage)}</div>
+                    <div style="color:#8899aa; font-size: 0.7em;">мс</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            const scroll = habits.scrollDepth;
+            if (scroll && scroll.percentage !== '0%') {
+                const scrollColor =
+                    scroll.category === 'full' ? '#00ff88' :
+                        scroll.category === 'high' ? '#00ccff' :
+                            scroll.category === 'medium' ? '#ffcc00' : '#ff9966';
+
+                html += `
+            <div style="margin-bottom: 10px; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+                <div style="color:#00ccff; font-weight: bold;">Глубина скролла</div>
+                <div style="margin-top: 8px;">
+                    <div style="width: 100%; height: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; overflow: hidden;">
+                        <div style="width: ${scroll.percentage}; height: 100%; background: ${scrollColor}; border-radius: 5px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span style="color:${scrollColor}; font-weight: bold;">${scroll.percentage}</span>
+                        <span style="color:#8899aa; font-size: 0.8em;">${scroll.category}</span>
+                    </div>
+                    <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                        ${scroll.pixels} из ${scroll.maxScroll}
+                    </div>
+                </div>
+            </div>
+        `;
+            }
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+            <div style="color:#cccccc; font-weight: bold;">Активность</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+                <div style="text-align: center; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 3px;">
+                    <div style="color:#00ccff; font-weight: bold;">Мышь</div>
+                    <div style="color:#8899aa; font-size: 0.8em;">
+                        ${habits.mouseActivity?.trackingAvailable ? 'Отслеживается' : 'Не отслеживается'}
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 3px;">
+                    <div style="color:#00ccff; font-weight: bold;">Клавиатура</div>
+                    <div style="color:#8899aa; font-size: 0.8em;">
+                        ${habits.keyboardActivity?.trackingAvailable ? 'Отслеживается' : 'Не отслеживается'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            const visibility = habits.visibilityChanges;
+            if (visibility) {
+                html += `
+            <div style="padding: 8px; background: rgba(0,255,136,0.1); border-radius: 4px;">
+                <div style="color:#00ff88; font-weight: bold;">Видимость страницы</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                    <span style="color:#cccccc;">Текущее состояние:</span>
+                    <span style="color:#00ff88; font-weight: bold; text-transform: capitalize;">
+                        ${visibility.currentState}
+                    </span>
+                </div>
+                <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">
+                    ${visibility.trackingAvailable ? 'Отслеживание активно' : 'Требуется обработчик событий'}
+                </div>
+            </div>
+        `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function getDeviceInteractionDisplay(data) {
+            const interaction = data.userProfile?.details?.deviceInteraction;
+            if (!interaction) return '<span style="color:#8899aa">Не доступно</span>';
+
+            let html = '<div style="max-height: 600px; overflow-y: auto;">';
+
+            html += `
+        <div style="margin-bottom: 10px; padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px;">
+            <div style="color:#00ccff; font-weight: bold;">Взаимодействие с устройством</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px;">
+    `;
+
+            const features = [
+                { key: 'touchCapable', name: 'Сенсорный экран', color: '#00ccff' },
+                { key: 'pointerEnabled', name: 'Pointer Events', color: '#00ccff' },
+                { key: 'deviceMotion', name: 'Датчик движения', color: '#00ccff' },
+                { key: 'deviceOrientation', name: 'Ориентация', color: '#00ccff' },
+                { key: 'vibration', name: 'Вибрация', color: '#00ccff' },
+                { key: 'gestureEnabled', name: 'Жесты', color: '#00ccff' }
+            ];
+
+            features.forEach(feature => {
+                const isAvailable = interaction[feature.key];
+                html += `
+            <div style="text-align: center; padding: 8px; background: ${isAvailable ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 3px;">
+                <div style="color:${isAvailable ? feature.color : '#ff5555'}; font-size: 0.8em;">${feature.name}</div>
+                <div style="color:#8899aa; font-size: 0.7em;">
+                    ${isAvailable ? '✓ Доступно' : '✗ Недоступно'}
+                </div>
+            </div>
+        `;
+            });
+
+            html += `
+            </div>
+                ${interaction.maxTouchPoints > 0 ? `
+                    <div style="margin-top: 8px; color:#cccccc; font-size: 0.9em;">
+                        Максимум точек касания: ${interaction.maxTouchPoints}
+                    </div>
+                    ` : ''}
+            </div>
+            `;
+
+            html += '</div>';
+            return html;
+        }
+
+        function getPaymentSummaryDisplay(data) {
+            const payments = data.payments?.details;
+            if (!payments) {
+                return '<span style="color:#8899aa">Данные не собраны</span>';
+            }
+
+            const summary = payments.summary || {};
+
+            let html = `
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+    `;
+
+            html += `
+        <div style="padding: 10px; background:${summary.hasAutofill ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 6px; text-align: center;">
+            <div style="color:${summary.hasAutofill ? '#00ff88' : '#ff5555'}; font-size: 1.8em;">${summary.hasAutofill ? '✓' : '✗'}</div>
+            <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">Автозаполнение</div>
+        </div>
+    `;
+
+            html += `
+        <div style="padding: 10px; background:${summary.hasPaymentAPI ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 6px; text-align: center;">
+            <div style="color:${summary.hasPaymentAPI ? '#00ff88' : '#ff5555'}; font-size: 1.8em;">${summary.hasPaymentAPI ? '✓' : '✗'}</div>
+            <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">Платежный API</div>
+        </div>
+    `;
+
+            html += `
+        <div style="padding: 10px; background:${summary.hasWebAuthn ? 'rgba(0,255,136,0.1)' : 'rgba(255,100,0,0.1)'}; border-radius: 6px; text-align: center;">
+            <div style="color:${summary.hasWebAuthn ? '#00ff88' : '#ff5555'}; font-size: 1.8em;">${summary.hasWebAuthn ? '✓' : '✗'}</div>
+            <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">WebAuthn</div>
+        </div>
+    `;
+
+            const methodCount = summary.supportedMethods || 0;
+            html += `
+        <div style="padding: 10px; background: rgba(0, 100, 255, 0.1); border-radius: 6px; text-align: center;">
+            <div style="color:#00ccff; font-size: 1.8em; font-weight: bold;">${methodCount}</div>
+            <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">Методы оплаты</div>
+        </div>
+    `;
+
+            html += `</div>`;
+
+            const statusColor = summary.canMakePayments ? '#00ff88' : '#ff5555';
+            const statusText = summary.canMakePayments ? 'Платежи доступны' : 'Платежи недоступны';
+
+            html += `
+        <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; border-left: 3px solid ${statusColor};">
+            <div style="color:${statusColor}; font-weight: bold;">${statusText}</div>
+            ${summary.hasBiometric ?
+                    '<div style="color:#00ff88; font-size: 0.9em; margin-top: 5px;">✓ Биометрическая аутентификация доступна</div>' :
+                    '<div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">✗ Биометрия недоступна</div>'
+                }
+        </div>
+    `;
+
+            return html;
+        }
+
+        function getAutofillDisplay(data) {
+            const autofill = data.payments?.details?.autofill;
+            if (!autofill) {
+                return '<span style="color:#8899aa">Нет данных</span>';
+            }
+
+            let html = `
+        <div style="
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+        ">
+    `;
+
+            html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span style="color:#00ff88; font-weight: bold;">Credential Management API</span>
+            <span style="color:${autofill.available ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                ${autofill.available ? '● Доступен' : '● Не доступен'}
+            </span>
+        </div>
+    `;
+
+            if (autofill.credentialsAPI) {
+                const creds = autofill.credentialsAPI;
+                html += `
+            <div style="margin-bottom: 15px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Функции API:</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                    <div style="padding: 8px; background: ${creds.get ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; border-radius: 4px;">
+                        <div style="color:${creds.get ? '#00ff88' : '#ff5555'}; font-size: 0.9em;">get()</div>
+                    </div>
+                    <div style="padding: 8px; background: ${creds.create ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; border-radius: 4px;">
+                        <div style="color:${creds.create ? '#00ff88' : '#ff5555'}; font-size: 0.9em;">create()</div>
+                    </div>
+                    <div style="padding: 8px; background: ${creds.store ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; border-radius: 4px;">
+                        <div style="color:${creds.store ? '#00ff88' : '#ff5555'}; font-size: 0.9em;">store()</div>
+                    </div>
+                    <div style="padding: 8px; background: ${creds.preventSilentAccess ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; border-radius: 4px;">
+                        <div style="color:${creds.preventSilentAccess ? '#00ff88' : '#ff5555'}; font-size: 0.9em;">preventSilentAccess()</div>
+                    </div>
+                </div>
+            </div>
+        `;
+            }
+
+            if (autofill.features) {
+                const features = autofill.features;
+                html += `
+            <div style="margin-bottom: 15px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Поддерживаемые типы:</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                    ${[
+                        { key: 'hasPasswordManager', label: 'Пароли', icon: '🔐' },
+                        { key: 'hasCreditCardAutofill', label: 'Карты', icon: '💳' },
+                        { key: 'hasAddressAutofill', label: 'Адрес', icon: '🏠' },
+                        { key: 'hasNameAutofill', label: 'Имя', icon: '👤' },
+                        { key: 'hasEmailAutofill', label: 'Email', icon: '📧' },
+                        { key: 'hasPhoneAutofill', label: 'Телефон', icon: '📱' }
+                    ].map(item => `
+                        <div style="padding: 6px; background: ${features[item.key] ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; 
+                                    border-radius: 4px; text-align: center;">
+                            <div style="color:${features[item.key] ? '#00ff88' : '#ff5555'}; font-size: 1.2em;">${item.icon}</div>
+                            <div style="color:#8899aa; font-size: 0.8em;">${item.label}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+            }
+
+            html += `
+        <div style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color:#8899aa;">Найдено форм с autocomplete:</span>
+                <span style="color:#00ff88; font-weight: bold;">${autofill.formsDetected || 0}</span>
+            </div>
+            ${autofill.autofillHints?.length > 0 ? `
+                <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">
+                    Подсказки: ${autofill.autofillHints.join(', ')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+            html += `</div>`;
+            return html;
+        }
+
+        function getPaymentSystemsDisplay(data) {
+            const payment = data.payments?.details?.payment;
+            if (!payment) {
+                return '<span style="color:#8899aa">Нет данных</span>';
+            }
+
+            let html = `
+        <div style="
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(255, 153, 102, 0.05);
+            border: 1px solid rgba(255, 153, 102, 0.2);
+            border-radius: 8px;
+        ">
+    `;
+
+            html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span style="color:#ff9966; font-weight: bold;">Payment Request API</span>
+            <span style="color:${payment.available ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                ${payment.available ? '● Доступен' : '● Нет доступа'}
+            </span>
+        </div>
+    `;
+
+            html += `
+        <div style="padding: 10px; background: ${payment.canMakePayments ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; 
+                    border-radius: 6px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:${payment.canMakePayments ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                    ${payment.canMakePayments ? '✓ Платежи возможны' : '✗ Платежи невозможны'}
+                </span>
+                <span style="color:#8899aa;">
+                    ${payment.supportedMethods?.length || 0} метод(ов)
+                </span>
+            </div>
+        </div>
+    `;
+
+            if (payment.supportedMethods?.length > 0) {
+                html += `
+            <div style="margin-bottom: 15px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Поддерживаемые методы:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${payment.supportedMethods.map(method => {
+                    const methodIcons = {
+                        'https://google.com/pay': { icon: 'G', color: '#4285F4', name: 'Google Pay' },
+                        'https://apple.com/apple-pay': { icon: 'A', color: '#000000', name: 'Apple Pay' },
+                        'https://paypal.com': { icon: 'P', color: '#003087', name: 'PayPal' },
+                        'basic-card': { icon: '💳', color: '#ff9966', name: 'Банковские карты' },
+                        'https://amazon.com/amazonpay': { icon: 'A', color: '#FF9900', name: 'Amazon Pay' }
+                    };
+
+                    const info = methodIcons[method] || { icon: '?', color: '#8899aa', name: method };
+
+                    return `
+                            <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; 
+                                        background: ${info.color}20; border-radius: 20px; border: 1px solid ${info.color}40;">
+                                <div style="width: 24px; height: 24px; background: ${info.color}; 
+                                            color: white; border-radius: 50%; display: flex; 
+                                            align-items: center; justify-content: center; font-weight: bold;">
+                                    ${info.icon}
+                                </div>
+                                <span style="color:#fff; font-size: 0.9em;">${info.name}</span>
+                            </div>
+                        `;
+                }).join('')}
+                </div>
+            </div>
+        `;
+            }
+
+            if (payment.supportedNetworks?.length > 0) {
+                html += `
+            <div style="margin-bottom: 15px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Сети карт:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    ${payment.supportedNetworks.map(network => {
+                    const networkColors = {
+                        'visa': '#1A1F71',
+                        'mastercard': '#EB001B',
+                        'amex': '#2E77BC',
+                        'discover': '#FF6000',
+                        'jcb': '#0F4C81',
+                        'mir': '#1E5EB5'
+                    };
+
+                    return `
+                            <div style="padding: 4px 8px; background: ${networkColors[network] || '#666'}20; 
+                                        border-radius: 4px; border: 1px solid ${networkColors[network] || '#666'}40;">
+                                <span style="color:#fff; font-size: 0.85em; text-transform: uppercase;">${network}</span>
+                            </div>
+                        `;
+                }).join('')}
+                </div>
+            </div>
+        `;
+            }
+
+            if (payment.walletDetection) {
+                const wallet = payment.walletDetection;
+                html += `
+            <div style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Обнаруженные кошельки:</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                    ${[
+                        { key: 'googlePay', label: 'Google Pay', color: wallet.googlePay ? '#00ff88' : '#ff5555' },
+                        { key: 'applePay', label: 'Apple Pay', color: wallet.applePay ? '#00ff88' : '#ff5555' },
+                        { key: 'paypal', label: 'PayPal', color: wallet.paypal ? '#00ff88' : '#ff5555' },
+                        { key: 'amazonPay', label: 'Amazon Pay', color: wallet.amazonPay ? '#00ff88' : '#ff5555' }
+                    ].map(item => `
+                        <div style="padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                            <div style="color:${wallet[item.key] ? item.color : '#ff5555'};
+                                        font-size: 0.9em; display: flex; align-items: center; gap: 6px;">
+                                <span>${wallet[item.key] ? '✓' : '✗'}</span>
+                                <span>${item.label}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function getWebAuthnDisplay(data) {
+            const webauthn = data.payments?.details?.webauthn;
+            if (!webauthn) {
+                return '<span style="color:#8899aa">Нет данных</span>';
+            }
+
+            let html = `
+        <div style="
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(102, 102, 255, 0.05);
+            border: 1px solid rgba(102, 102, 255, 0.2);
+            border-radius: 8px;
+        ">
+    `;
+
+            html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span style="color:#6666ff; font-weight: bold;">WebAuthn / Биометрия</span>
+            <span style="color:${webauthn.available ? '#00ff88' : '#ff5555'}; font-weight: bold;">
+                ${webauthn.available ? '● Доступно' : '● Нет доступа'}
+            </span>
+        </div>
+    `;
+
+            const securityColors = {
+                'high': '#00ff88',
+                'medium': '#ffcc00',
+                'low': '#ff5555',
+                'unknown': '#8899aa'
+            };
+
+            html += `
+        <div style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color:#8899aa;">Уровень безопасности:</span>
+                <span style="color:${securityColors[webauthn.securityLevel]}; font-weight: bold; text-transform: uppercase;">
+                    ${webauthn.securityLevel}
+                </span>
+            </div>
+        </div>
+    `;
+
+            html += `
+        <div style="margin-bottom: 15px;">
+            <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Аутентификация:</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div style="padding: 10px; background: ${webauthn.hasBiometric ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; 
+                            border-radius: 6px; text-align: center;">
+                    <div style="color:${webauthn.hasBiometric ? '#00ff88' : '#ff5555'}; font-size: 1.5em;">
+                        ${webauthn.hasBiometric ? '✓' : '✗'}
+                    </div>
+                    <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">Биометрия</div>
+                    <div style="color:${webauthn.hasBiometric ? '#00ff88' : '#ff5555'}; font-size: 0.8em; font-weight: bold;">
+                        ${webauthn.hasBiometric ? '● Доступна' : '● Нет доступа'}
+                    </div>
+                </div>
+                
+                <div style="padding: 10px; background: ${webauthn.hasConditionalUI ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; 
+                            border-radius: 6px; text-align: center;">
+                    <div style="color:${webauthn.hasConditionalUI ? '#00ff88' : '#ff5555'}; font-size: 1.5em;">
+                        ${webauthn.hasConditionalUI ? '✓' : '✗'}
+                    </div>
+                    <div style="color:#8899aa; font-size: 0.9em; margin-top: 5px;">Условный UI</div>
+                    <div style="color:${webauthn.hasConditionalUI ? '#00ff88' : '#ff5555'}; font-size: 0.8em; font-weight: bold;">
+                        ${webauthn.hasConditionalUI ? '● Доступен' : '● Нет доступа'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            if (webauthn.capabilities) {
+                const caps = webauthn.capabilities;
+                html += `
+            <div style="margin-bottom: 15px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Возможности:</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                    ${[
+                        { key: 'u2f', label: 'U2F', icon: '🔑' },
+                        { key: 'ctap2', label: 'CTAP2', icon: '🔄' },
+                        { key: 'residentKeys', label: 'Resident Keys', icon: '🏠' },
+                        { key: 'userVerification', label: 'User Verify', icon: '👤' }
+                    ].map(item => `
+                        <div style="padding: 8px; background: ${caps[item.key] ? 'rgba(0,255,136,0.1)' : 'rgba(255,85,85,0.1)'}; 
+                                    border-radius: 4px; text-align: center;">
+                            <div style="color:${caps[item.key] ? '#00ff88' : '#ff5555'}; font-size: 1.2em;">${item.icon}</div>
+                            <div style="color:#8899aa; font-size: 0.8em; margin-top: 3px;">${item.label}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+            }
+
+            if (webauthn.authenticators) {
+                const auth = webauthn.authenticators;
+                html += `
+            <div style="padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px;">
+                <div style="color:#8899aa; font-size: 0.9em; margin-bottom: 8px;">Типы аутентификаторов:</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                    <div style="padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px; text-align: center;">
+                        <div style="color:#8899aa; font-size: 0.8em;">Платформа</div>
+                        <div style="color:#0066ff; font-size: 0.8em; font-weight: bold;">${auth.platform}</div>
+                    </div>
+                    <div style="padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px; text-align: center;">
+                        <div style="color:#8899aa; font-size: 0.8em;">Кроссплатформа</div>
+                        <div style="color:#0066ff; font-size: 0.8em; font-weight: bold;">${auth.crossPlatform}</div>
+                    </div>
+                    <div style="padding: 8px; background: rgba(0,100,255,0.1); border-radius: 4px; text-align: center;">
+                        <div style="color:#8899aa; font-size: 0.8em;">Security Key</div>
+                        <div style="color:#0066ff; font-size: 0.8em; font-weight: bold;">${auth.securityKey}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function getDetailedCookiesDisplay(data) {
+            if (!data.storage?.cookies?.available) {
+                return '<span style="color:#ff5555">● Нет доступа к cookies</span>';
+            }
+
+            const cookies = data.storage.cookies;
+            const count = cookies.count || 0;
+
+            if (count === 0) {
+                return '<span style="color:#00ff88">● Доступно: </span> 0 куки (чистые cookies)';
+            }
+
+            let html = `<div style="margin-top: 10px;">`;
+            html += `<span style="color:#00ff88">● Доступно: </span> ${count} куки`;
+
+            html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,136,0.1); border-radius: 5px;">`;
+            html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.9em;">`;
+
+            if (cookies.secureCookies > 0) {
+                html += `<div><span style="color:#00ff88">🔒</span> Secure: ${cookies.secureCookies}</div>`;
+            }
+            if (cookies.httpOnlyCookies > 0) {
+                html += `<div><span style="color:#ff9966">🛡️</span> HTTP-Only: ${cookies.httpOnlyCookies}</div>`;
+            }
+            if (cookies.sessionCookies > 0) {
+                html += `<div><span style="color:#66aaff">💾</span> Сессионные: ${cookies.sessionCookies}</div>`;
+            }
+
+            if (cookies.detailedCookies) {
+                const categories = {};
+                cookies.detailedCookies.forEach(cookie => {
+                    categories[cookie.category] = (categories[cookie.category] || 0) + 1;
+                });
+
+                Object.entries(categories).forEach(([cat, num]) => {
+                    const colors = {
+                        'analytics': '#ff5555',
+                        'facebook': '#4267B2',
+                        'authentication': '#00ff88',
+                        'ecommerce': '#ff9966',
+                        'preferences': '#66aaff',
+                        'consent': '#aa66ff',
+                        'other': '#8899aa'
+                    };
+                    html += `<div><span style="color:${colors[cat] || '#8899aa'}">⬤</span> ${cat}: ${num}</div>`;
+                });
+            }
+
+            html += `</div></div>`;
+
+            if (cookies.detailedCookies && cookies.detailedCookies.length > 0) {
+                html += `<details style="margin-top: 10px;">`;
+                html += `<summary style="color:#ff9966; cursor: pointer; font-size: 0.9em;">📋 Показать детали (${cookies.detailedCookies.length})</summary>`;
+                html += `<div style="max-height: 300px; overflow-y: auto; margin-top: 10px;">`;
+
+                cookies.detailedCookies.forEach((cookie, index) => {
+                    const colors = {
+                        'analytics': 'rgba(255, 85, 85, 0.1)',
+                        'facebook': 'rgba(66, 103, 178, 0.1)',
+                        'authentication': 'rgba(0, 255, 136, 0.1)',
+                        'ecommerce': 'rgba(255, 153, 102, 0.1)',
+                        'preferences': 'rgba(102, 170, 255, 0.1)',
+                        'consent': 'rgba(170, 102, 255, 0.1)',
+                        'other': 'rgba(136, 153, 170, 0.1)'
+                    };
+
+                    html += `<div style="margin: 5px 0; padding: 8px; background: ${colors[cookie.category] || 'rgba(136, 153, 170, 0.1)'}; 
+                     border-radius: 4px; border-left: 3px solid ${colors[cookie.category]?.replace('0.1', '0.5') || '#8899aa'};">`;
+
+                    html += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
+                    html += `<strong style="color:#00ff88">${cookie.name}</strong>`;
+                    html += `<span style="font-size: 0.8em; color: #8899aa; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 10px;">
+                     ${cookie.category}</span>`;
+                    html += `</div>`;
+
+                    html += `<div style="margin-top: 5px; font-size: 0.85em; color: #cccccc;">
+                     ${cookie.value} ${cookie.fullLength > 50 ? `<span style="color:#ff9966;">(${cookie.fullLength} chars)</span>` : ''}</div>`;
+
+                    html += `<div style="margin-top: 5px; font-size: 0.75em; color: #8899aa; display: flex; gap: 10px;">`;
+                    if (cookie.secure) html += `<span>🔒 Secure</span>`;
+                    if (cookie.httpOnly) html += `<span>🛡️ HTTP-Only</span>`;
+                    if (cookie.session) html += `<span>💾 Сессия</span>`;
+                    html += `<span>${cookie.domain}</span>`;
+                    html += `</div>`;
+
+                    html += `</div>`;
+                });
+
+                html += `</div></details>`;
+            }
+
+            if (cookies.blockersDetected && cookies.blockersDetected.length > 0) {
+                html += `<div style="margin-top: 15px; padding: 10px; background: rgba(255, 85, 85, 0.1); border-radius: 6px; border: 1px solid rgba(255, 85, 85, 0.3);">`;
+                html += `<div style="color:#ff5555; font-weight: bold; margin-bottom: 8px;">🚫 Обнаружены блокировщики cookie (${cookies.blockersCount})</div>`;
+                html += `<div style="font-size: 0.9em;">`;
+
+                cookies.blockersDetected.forEach(blocker => {
+                    html += `<div style="margin: 3px 0; padding: 5px; background: rgba(255, 85, 85, 0.2); border-radius: 4px;">
+                     • ${blocker.tracker} (${blocker.cookieName}) — заблокирован</div>`;
+                });
+
+                html += `<div style="margin-top: 8px; color: #ff9966; font-size: 0.85em;">
+                 ⚠️ Расширение или настройки браузера блокируют трекерные куки</div>`;
+                html += `</div></div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function switchTab(tabName, clickedElement) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+            } else {
+                const tabButton = document.querySelector(`.tab[onclick*="${tabName}"]`);
+                if (tabButton) {
+                    tabButton.classList.add('active');
+                }
+            }
+        }
+
+        function clearAll() {
+            jsonInput.value = '';
+            results.style.display = 'none';
+            fileInput.value = '';
+        }
+
+        function exportReport() {
+            try {
+                const data = JSON.parse(extractJsonFromEmail(jsonInput.value));
+                const report = generateReport(data);
+
+                const blob = new Blob([report], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `отчет-${Date.now()}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Ошибка экспорта: ' + error.message);
+            }
+        }
+
+        function generateReport(data) {
+            return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Отчет</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #333; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .data-row { display: flex; margin: 5px 0; }
+        .label { font-weight: bold; width: 200px; }
+        .value { flex: 1; }
+    </style>
+</head>
+<body>
+    <h1>📊 Отчет</h1>
+    <p><strong>Дата создания:</strong> ${new Date().toLocaleString('ru-BY')}</p>
+    
+    <div class="section">
+        <h2>📋 Основная информация</h2>
+        <div class="data-row"><div class="label">Время сбора:</div><div class="value">${formatDate(data.meta?.collectedAt)}</div></div>
+        <div class="data-row"><div class="label">IP адрес:</div><div class="value">${data.location?.details?.ipBased?.ip || 'Не определен'}</div></div>
+        <div class="data-row"><div class="label">Браузер:</div><div class="value">${data.browser?.name || 'Не определен'}</div></div>
+    </div>
+    
+    <div class="section">
+        <h2>📍 Геолокация</h2>
+        <div class="data-row"><div class="label">Страна:</div><div class="value">${data.location?.details?.ipBased?.country_name || 'Не определена'}</div></div>
+        <div class="data-row"><div class="label">Город:</div><div class="value">${data.location?.details?.ipBased?.city || 'Не определен'}</div></div>
+        <div class="data-row"><div class="label">Координаты:</div><div class="value">${getPreciseLocation(data)}</div></div>
+    </div>
+    
+    <div class="section">
+        <h2>💻 Системная информация</h2>
+        <div class="data-row"><div class="label">Экран:</div><div class="value">${data.system?.screen?.width || 0} × ${data.system?.screen?.height || 0}</div></div>
+        <div class="data-row"><div class="label">ОС:</div><div class="value">${data.browser?.platform || 'Не определена'}</div></div>
+    </div>
+    
+    <div class="section">
+        <h2>📄 Полные данные</h2>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+    </div>
+</body>
+</html>`;
+        }
+
+        let decodeTimeout;
+        jsonInput.addEventListener('input', () => {
+            clearTimeout(decodeTimeout);
+            if (jsonInput.value.includes('"collected_data"')) {
+                decodeTimeout = setTimeout(decodeData, 1000);
+            }
+        });
+    </script>
+</body>
+
+</html>

