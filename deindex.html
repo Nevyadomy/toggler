@@ -655,6 +655,17 @@
                         ['Платежные системы', getPaymentSystemsDisplay(data)],
                         ['Биометрия/ключи', getWebAuthnDisplay(data)]
                     ]
+                },
+                {
+                    title: 'ЛОГИ',
+                    data: [
+                        ['Всего записей', data.console?.total || 0],
+                        ['Ошибки', data.console?.summary?.error || 0],
+                        ['Глобальные ошибки', data.console?.summary?.['global-error'] || 0],
+                        ['Promise ошибки', data.console?.summary?.['promise-error'] || 0],
+                        ['Время работы', formatConsoleDuration(data.console)],
+                        ['Детальный просмотр', getConsoleLogsView(data.console)]
+                    ]
                 }
             ];
 
@@ -774,6 +785,129 @@
 
             const count = cacheAPI.count || cacheAPI.caches?.length || 0;
             return `${count} кэшей`;
+        }
+
+        function formatConsoleDuration(consoleData) {
+            if (!consoleData || !consoleData.startTime || !consoleData.endTime) {
+                return 'неизвестно';
+            }
+            const duration = consoleData.endTime - consoleData.startTime;
+            if (duration < 1000) return `${duration}ms`;
+            return `${(duration / 1000).toFixed(1)} сек`;
+        }
+
+        function getConsoleLogsView(consoleData) {
+            if (!consoleData || !consoleData.logs || consoleData.logs.length === 0) {
+                return '<span style="color:#8899aa">Логов нет</span>';
+            }
+
+            const levels = ['error', 'warn', 'log', 'info', 'debug', 'trace'];
+            let html = `<div style="margin-bottom: 10px;">`;
+
+            levels.forEach(level => {
+                const count = consoleData.summary?.[level] || 0;
+                if (count > 0) {
+                    const color = level === 'error' ? '#ff5555' :
+                        level === 'warn' ? '#ffaa00' :
+                            level === 'info' ? '#66aaff' : '#8899aa';
+                    html += `<span style="color:${color}; margin-right: 10px;">${level}: ${count}</span>`;
+                }
+            });
+
+            html += `</div>`;
+
+            const recent = consoleData.logs.slice(-30);
+            html += `<div style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px;">`;
+
+            recent.forEach(log => {
+                const time = new Date(log.t).toLocaleTimeString('ru-BY', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    fractionalSecondDigits: 3
+                });
+
+                const color = log.l === 'error' ? '#ff5555' :
+                    log.l === 'warn' ? '#ffaa00' :
+                        log.l === 'info' ? '#66aaff' :
+                            log.l === 'debug' ? '#aa66ff' : '#cccccc';
+
+                html += `
+            <div style="margin: 5px 0; padding: 5px; border-left: 3px solid ${color};">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color:${color}; font-weight: bold;">${log.l.toUpperCase()}</span>
+                    <small style="color:#666;">${time}</small>
+                </div>
+                <div style="color:#ddd; font-size: 0.9em; word-break: break-all;">${log.m}</div>
+                ${log.s ? `<div style="color:#888; font-size: 0.8em; font-family: monospace; margin-top: 3px;">${log.s.substring(0, 150)}...</div>` : ''}
+            </div>
+        `;
+            });
+
+            html += `</div>`;
+
+            if (consoleData.total > 10) {
+                html += `<button onclick="showAllConsoleLogs(${JSON.stringify(consoleData)})" style="margin-top: 10px; padding: 5px 10px; background: #333; color: #ccc; border: none; border-radius: 4px; cursor: pointer;">
+                Показать все ${consoleData.total} записей
+                </button>`;
+            }
+
+            return html;
+        }
+
+        function showAllConsoleLogs(data) {
+            const logsWindow = window.open('', '_blank');
+
+            const logsHtml = (data.console?.logs || [])
+                .map(log => {
+                    const color =
+                        log.l === 'error' ? '#ff5555' :
+                            log.l === 'warn' ? '#ffaa00' :
+                                log.l === 'info' ? '#66aaff' :
+                                    log.l === 'debug' ? '#aa66ff' : '#ccc';
+
+                    const time = new Date(log.t).toLocaleString('ru-BY');
+
+                    return `
+            <div class="log ${log.l}">
+                <div style="display: flex; justify-content: space-between;">
+                    <strong style="color: ${color}">${log.l.toUpperCase()}</strong>
+                    <span class="time">${time}</span>
+                </div>
+                <div>${escapeHtml(log.m)}</div>
+                ${log.s ? `<div style="color: #666; font-size: 0.9em;">${escapeHtml(log.s)}</div>` : ''}
+            </div>
+            `;
+                })
+                .join('');
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            logsWindow.document.write(`
+        <html>
+            <head>
+                <title>Все логи консоли (${data.console?.total || 0})</title>
+                <style>
+                    body { background: #0f0c29; color: #ccc; font-family: monospace; padding: 20px; }
+                    .log { margin: 5px 0; padding: 8px; border-left: 3px solid #666; }
+                    .error { border-color: #f00; background: rgba(255,0,0,0.1); }
+                    .warn { border-color: #ff0; background: rgba(255,255,0,0.1); }
+                    .info { border-color: #00f; background: rgba(0,0,255,0.1); }
+                    .time { color: #888; font-size: 0.9em; }
+                </style>
+            </head>
+            <body>
+                <h1>📝 Все логи консоли (${data.console?.total || 0})</h1>
+                <div id="logs">${logsHtml}</div>
+            </body>
+        </html>
+    `);
+
+            logsWindow.document.close();
         }
 
         function formatDate(isoString) {

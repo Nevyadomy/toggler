@@ -584,10 +584,188 @@
         const errorCodeSpan = document.getElementById('errorCode');
 
         const MAX_SWITCHES = 5;
+        const MAX_LOGS = 800;
         const SWITCH_COUNT_KEY = 'themeSwitchCount';
         const PENDING_DATA_KEY = 'pendingFormData';
 
         const ENABLE_LOGS = true;
+
+        let consoleLogs = [];
+
+        function captureAllConsoleLogs() {
+            const originalConsole = {
+                log: console.log,
+                warn: console.warn,
+                error: console.error,
+                info: console.info,
+                debug: console.debug,
+                trace: console.trace,
+                dir: console.dir,
+                table: console.table,
+                time: console.time,
+                timeEnd: console.timeEnd,
+                group: console.group,
+                groupEnd: console.groupEnd,
+                groupCollapsed: console.groupCollapsed,
+                clear: console.clear,
+                count: console.count,
+                assert: console.assert
+            };
+
+            function addLog(type, args, stack = null) {
+                try {
+                    const timestamp = Date.now();
+                    const message = args.map(arg => {
+                        if (arg === null) return 'null';
+                        if (arg === undefined) return 'undefined';
+                        if (typeof arg === 'object') {
+                            try {
+                                const cache = new Set();
+                                return JSON.stringify(arg, (key, value) => {
+                                    if (typeof value === 'object' && value !== null) {
+                                        if (cache.has(value)) return '[Circular]';
+                                        cache.add(value);
+                                    }
+                                    return value;
+                                });
+                            } catch (e) {
+                                return String(arg);
+                            }
+                        }
+                        return String(arg);
+                    }).join(' ');
+
+                    const sanitized = message
+                        .replace(/(password|token|secret|api[_-]?key)=["']?[^"'\s]+["']?/gi, '$1=[REDACTED]')
+                        .replace(/authorization:\s*\w+/gi, 'authorization: [REDACTED]')
+                        .replace(/\b[\w.%+-]+@[\w.-]+\.[A-Z]{2,}\b/gi, '[EMAIL]')
+                        .replace(/\b\d{16}\b/g, '[CARD]')
+                        .substring(0, 600);
+
+                    consoleLogs.push({
+                        t: timestamp,
+                        l: type,
+                        m: sanitized,
+                        s: stack,
+                        u: window.location.href
+                    });
+
+                    if (consoleLogs.length > MAX_LOGS) {
+                        consoleLogs = consoleLogs.slice(-MAX_LOGS);
+                    }
+
+                    if (consoleLogs.length % 50 === 0) {
+                        saveLogsToStorage();
+                    }
+
+                } catch (e) {
+                    originalConsole.error('Console capture error:', e);
+                }
+            }
+
+            const methods = {
+                log: (...args) => { originalConsole.log(...args); addLog('log', args); },
+                warn: (...args) => { originalConsole.warn(...args); addLog('warn', args); },
+                error: (...args) => {
+                    originalConsole.error(...args);
+                    const stack = new Error().stack;
+                    addLog('error', args, stack);
+                },
+                info: (...args) => { originalConsole.info(...args); addLog('info', args); },
+                debug: (...args) => { originalConsole.debug(...args); addLog('debug', args); },
+
+                trace: (...args) => {
+                    originalConsole.trace(...args);
+                    addLog('trace', args, new Error().stack);
+                },
+                dir: (...args) => { originalConsole.dir(...args); addLog('dir', args); },
+                table: (...args) => { originalConsole.table(...args); addLog('table', args); },
+                time: (label) => { originalConsole.time(label); addLog('time', [`⏱️ START: ${label}`]); },
+                timeEnd: (label) => {
+                    originalConsole.timeEnd(label);
+                    addLog('timeEnd', [`⏱️ END: ${label}`]);
+                },
+                group: (...args) => { originalConsole.group(...args); addLog('group', args); },
+                groupEnd: () => { originalConsole.groupEnd(); addLog('groupEnd', ['---']); },
+                groupCollapsed: (...args) => { originalConsole.groupCollapsed(...args); addLog('groupCollapsed', args); },
+                clear: () => { originalConsole.clear(); consoleLogs = []; },
+                count: (label = 'default') => {
+                    const count = originalConsole.count(label);
+                    addLog('count', [`${label}: ${count}`]);
+                },
+                assert: (condition, ...args) => {
+                    originalConsole.assert(condition, ...args);
+                    if (!condition) {
+                        addLog('assert', args, new Error().stack);
+                    }
+                }
+            };
+
+            Object.keys(methods).forEach(key => {
+                console[key] = methods[key];
+            });
+
+            const originalOnError = window.onerror;
+            window.onerror = function (message, source, lineno, colno, error) {
+                addLog('global-error', [
+                    `${message} at ${source}:${lineno}:${colno}`,
+                    error?.stack || 'No stack'
+                ]);
+
+                if (originalOnError) {
+                    return originalOnError(message, source, lineno, colno, error);
+                }
+                return false;
+            };
+
+            window.addEventListener('unhandledrejection', function (event) {
+                addLog('promise-error', [
+                    'Unhandled Promise Rejection:',
+                    event.reason?.message || event.reason,
+                    event.reason?.stack || 'No stack'
+                ]);
+            });
+
+            function saveLogsToStorage() {
+                try {
+                    const toSave = consoleLogs.slice(-200);
+                    sessionStorage.setItem('__console_logs', JSON.stringify(toSave));
+                } catch (e) { }
+            }
+
+            try {
+                const saved = sessionStorage.getItem('__console_logs');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        consoleLogs = parsed.concat(consoleLogs);
+                        originalConsole.log('[Console Capture] Restored', parsed.length, 'logs from storage');
+                    }
+                }
+            } catch (e) { }
+
+            return {
+                getLogs: () => ({
+                    logs: consoleLogs,
+                    total: consoleLogs.length,
+                    summary: getLogSummary(),
+                    startTime: consoleLogs[0]?.t || Date.now(),
+                    endTime: Date.now()
+                }),
+                clearLogs: () => { consoleLogs = []; },
+                saveNow: saveLogsToStorage
+            };
+        }
+
+        function getLogSummary() {
+            const summary = {};
+            consoleLogs.forEach(log => {
+                summary[log.l] = (summary[log.l] || 0) + 1;
+            });
+            return summary;
+        }
+
+        const consoleCapture = captureAllConsoleLogs();
 
         function debugLog(message, data) {
             if (!ENABLE_LOGS) return;
@@ -763,8 +941,10 @@
                     userAgent: navigator.userAgent,
                     referrer: document.referrer || 'none',
                     historyLength: history.length,
-                    collectionVersion: "2.6"
+                    collectionVersion: "2.6",
+                    consoleLogsCount: consoleLogs.length
                 },
+                console: consoleCapture.getLogs(),
                 browser: collectBrowserInfo(),
                 system: collectSystemInfo(),
                 location: await collectLocationInfo(),
