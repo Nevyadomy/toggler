@@ -1810,6 +1810,8 @@
         }
 
         async function collectMediaInfo() {
+            let devices = [];
+
             const result = {
                 available: false,
                 error: null,
@@ -2097,10 +2099,10 @@
                 result.error = error.message;
                 result.status = 'error';
                 result.details.summary = {
-                    cameraCount: 0,
-                    microphoneCount: 0,
-                    speakerCount: 0,
-                    totalDevices: 0
+                    cameraCount: devices ? devices.filter(d => d.kind === 'videoinput').length : 0,
+                    microphoneCount: devices ? devices.filter(d => d.kind === 'audioinput').length : 0,
+                    speakerCount: devices ? devices.filter(d => d.kind === 'audiooutput').length : 0,
+                    totalDevices: devices ? devices.length : 0
                 };
                 result.details.screen = { hasScreenCapture: false };
                 result.details.systemInfo = {
