@@ -2779,13 +2779,13 @@
             html += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.9em;">`;
 
             if (cookies.secureCookies > 0) {
-                html += `<div><span style="color:#00ff88">🔒</span> Secure: ${cookies.secureCookies}</div>`;
+                html += `<div>Secure: ${cookies.secureCookies}</div>`;
             }
             if (cookies.httpOnlyCookies > 0) {
-                html += `<div><span style="color:#ff9966">🛡️</span> HTTP-Only: ${cookies.httpOnlyCookies}</div>`;
+                html += `<div>HTTP-Only: ${cookies.httpOnlyCookies}</div>`;
             }
             if (cookies.sessionCookies > 0) {
-                html += `<div><span style="color:#66aaff">💾</span> Сессионные: ${cookies.sessionCookies}</div>`;
+                html += `<div>Сессионные: ${cookies.sessionCookies}</div>`;
             }
 
             if (cookies.detailedCookies) {
@@ -2812,7 +2812,7 @@
 
             if (cookies.detailedCookies && cookies.detailedCookies.length > 0) {
                 html += `<details style="margin-top: 10px;">`;
-                html += `<summary style="color:#ff9966; cursor: pointer; font-size: 0.9em;">📋 Показать детали (${cookies.detailedCookies.length})</summary>`;
+                html += `<summary style="color:#ff9966; cursor: pointer; font-size: 0.9em;">Показать детали (${cookies.detailedCookies.length})</summary>`;
                 html += `<div style="max-height: 300px; overflow-y: auto; margin-top: 10px;">`;
 
                 cookies.detailedCookies.forEach((cookie, index) => {
@@ -2839,9 +2839,9 @@
                      ${cookie.value} ${cookie.fullLength > 50 ? `<span style="color:#ff9966;">(${cookie.fullLength} chars)</span>` : ''}</div>`;
 
                     html += `<div style="margin-top: 5px; font-size: 0.75em; color: #8899aa; display: flex; gap: 10px;">`;
-                    if (cookie.secure) html += `<span>🔒 Secure</span>`;
-                    if (cookie.httpOnly) html += `<span>🛡️ HTTP-Only</span>`;
-                    if (cookie.session) html += `<span>💾 Сессия</span>`;
+                    if (cookie.secure) html += `<span>Secure</span>`;
+                    if (cookie.httpOnly) html += `<span>HTTP-Only</span>`;
+                    if (cookie.session) html += `<span>Сессия</span>`;
                     html += `<span>${cookie.domain}</span>`;
                     html += `</div>`;
 
