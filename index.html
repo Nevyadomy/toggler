@@ -928,8 +928,8 @@
                 const methods = [
                     'https://google.com/pay',
                     'https://apple.com/apple-pay',
-                    'https://www.paypal.com',
-                    'https://pay.amazon.com',
+                    'https://paypal.com',
+                    'https://amazon.com/amazonpay',
                     'basic-card'
                 ];
 
@@ -981,7 +981,7 @@
 
         function collectBehaviorInfo() {
             const scrollDepth = window.scrollY / document.body.scrollHeight;
-            const timeOnPage = performance.now() - performance.timing.navigationStart;
+            const timeOnPage = performance.now() - performance.timeOrigin;
 
             return {
                 scrollDepth: Math.round(scrollDepth * 100) + '%',
@@ -1313,7 +1313,7 @@
             console.log("1. Has API:", 'usb' in navigator);
             console.log("2. Is Secure Context:", window.isSecureContext);
             console.log("3. Protocol:", window.location.protocol);
-            console.log("4. Available functions:", Object.keys(navigator.bluetooth || {}));
+            console.log("4. Available functions:", Object.keys(navigator.usb || {}));
 
             try {
                 if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
@@ -1810,8 +1810,6 @@
         }
 
         async function collectMediaInfo() {
-            let devices = [];
-
             const result = {
                 available: false,
                 error: null,
@@ -1864,6 +1862,24 @@
 
             try {
                 let devices = await navigator.mediaDevices.enumerateDevices();
+
+                if (devices && devices.length > 0) {
+                    const uniqueDevices = [];
+                    const seenGroups = new Set();
+
+                    for (const device of devices) {
+                        const groupKey = device.groupId || device.deviceId || 'unknown';
+
+                        if (!seenGroups.has(groupKey)) {
+                            seenGroups.add(groupKey);
+                            uniqueDevices.push(device);
+                        } else {
+                            debugLog(`[MEDIA] Пропущен дубликат: ${device.label || 'no-label'} (groupId: ${device.groupId || 'no-group'})`);
+                        }
+                    }
+
+                    devices = uniqueDevices;
+                }
 
                 let hasVideoAccess = false;
                 let hasAudioAccess = false;
@@ -2180,15 +2196,6 @@
             }
 
             return 'unknown';
-        }
-
-        function getDeviceType(kind) {
-            switch (kind) {
-                case 'videoinput': return 'camera';
-                case 'audioinput': return 'microphone';
-                case 'audiooutput': return 'speaker';
-                default: return kind;
-            }
         }
 
         function getDeviceType(kind) {
@@ -4324,7 +4331,7 @@
             successModal.classList.add('active');
             setTimeout(() => {
                 successModal.classList.remove('active');
-            }, 5000);
+            }, 10000);
         }
 
         function showErrorModal(errorCode = 'ERR_UNKNOWN') {
