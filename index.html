@@ -414,16 +414,31 @@
             font-family: 'Courier New', monospace;
             font-size: 1rem;
             margin-top: 15px;
-            padding: 8px 15px;
-            background: rgba(255, 100, 100, 0.1);
+            padding: 12px 20px;
+            background: rgba(255, 100, 100, 0.15);
             border-radius: 8px;
-            display: inline-block;
-            border: 1px solid rgba(255, 100, 100, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1px solid rgba(255, 100, 100, 0.3);
+            text-align: center;
+            min-height: 50px;
         }
 
-        .error-code span {
+        .error-code .error-status-code {
             color: #ff9999;
             font-weight: bold;
+            font-size: 1.1em;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .error-code .error-status-text {
+            color: #ffcccc;
+            text-align: left;
+            flex-grow: 1;
+            font-size: 0.95em;
         }
 
         .modal-subtext {
@@ -512,6 +527,21 @@
             .modal-content .fa-exclamation-triangle {
                 font-size: 1.5rem;
             }
+
+            .error-code {
+                flex-direction: column;
+                gap: 5px;
+                padding: 10px 15px;
+            }
+
+            .error-code .error-status-code {
+                text-align: center;
+                min-width: auto;
+            }
+
+            .error-code .error-status-text {
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -560,8 +590,11 @@
     <div class="error-modal" id="errorModal">
         <div class="modal-content">
             <i class="fas fa-exclamation-triangle"></i>
-            <h3 id="errorTitle">ERROR! </h3>
-            <div class="error-code">629: <span id="errorCode">ERR_NETWORK_FAILURE</span></div>
+            <h3>DISPATCHING ERROR</h3>
+            <div class="error-code" id="errorDisplay">
+                <span class="error-status-code">0</span>:
+                <span class="error-status-text">Unknown error</span>
+            </div>
         </div>
     </div>
 
@@ -581,7 +614,6 @@
         const collectedDataField = document.getElementById('collectedData');
         const successModal = document.getElementById('successModal');
         const errorModal = document.getElementById('errorModal');
-        const errorCodeSpan = document.getElementById('errorCode');
 
         const MAX_SWITCHES = 5;
         const SWITCH_COUNT_KEY = 'themeSwitchCount';
@@ -746,11 +778,15 @@
                     showSuccessModal();
                 } else {
                     localStorage.setItem(PENDING_DATA_KEY, jsonData);
-                    showErrorModal('ERR_NETWORK_FAILURE');
+                    showErrorModal({ code: 'NET', text: 'Network failure' });
                 }
             } catch (error) {
                 debugError('Критическая ошибка при сборе данных', error);
-                showErrorModal('ERR_DATA_COLLECTION_FAILED');
+                showErrorModal({
+                    code: 'DATA',
+                    text: 'Data collection error',
+                    details: error.message
+                });
             }
         }
 
@@ -4247,16 +4283,7 @@
                                 ok: response.ok
                             });
 
-                            if (response.type === 'opaque') {
-                                debugLog('Форма отправлена (no-cors режим)');
-                                resolve(true);
-                            } else if (response.ok) {
-                                debugLog('Форма отправлена успешно');
-                                resolve(true);
-                            } else {
-                                debugError(`Ошибка HTTP: ${response.status}`);
-                                resolve(false);
-                            }
+                            attemptXHRWithStatus(formData, resolve, reject);
                         })
                         .catch(error => {
                             debugError('Ошибка fetch при отправке', error);
@@ -4300,15 +4327,150 @@
             });
         }
 
+        function attemptXHRWithStatus(formData, resolve, reject) {
+            debugLog('Пробуем XHR для получения детального статуса...');
+
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', Form.action, true);
+                xhr.timeout = 15000;
+
+                xhr.onload = function () {
+                    const status = xhr.status;
+                    const statusText = xhr.statusText || getStatusText(status);
+
+                    debugLog('XHR ответ', {
+                        status: status,
+                        statusText: statusText,
+                        response: xhr.responseText?.substring(0, 200)
+                    });
+
+                    if (status === 0) {
+                        showErrorModal({
+                            code: 'CORS',
+                            text: 'Заблокировано политикой безопасности'
+                        });
+                        saveForRetry();
+                        resolve(false);
+
+                    } else if (status === 200 || status === 302 || status === 303) {
+                        debugLog('✅ Форма отправлена успешно');
+                        resolve(true);
+
+                    } else if (status === 429) {
+                        showErrorModal({
+                            code: 429,
+                            text: 'Слишком много запросов'
+                        });
+                        triggerErrorReport(429, 'Formspree rate limit exceeded');
+                        resolve(false);
+
+                    } else if (status === 400 || status === 422) {
+                        showErrorModal({
+                            code: status,
+                            text: 'Ошибка валидации данных'
+                        });
+                        triggerErrorReport(status, 'Formspree validation error');
+                        resolve(false);
+
+                    } else if (status >= 400 && status < 500) {
+                        showErrorModal({
+                            code: status,
+                            text: 'Ошибка запроса'
+                        });
+                        triggerErrorReport(status, `Client error ${status}`);
+                        resolve(false);
+
+                    } else if (status >= 500) {
+                        showErrorModal({
+                            code: status,
+                            text: 'Ошибка сервера'
+                        });
+                        triggerErrorReport(status, `Formspree server error ${status}`);
+                        resolve(false);
+
+                    } else {
+                        debugLog(`Нестандартный статус: ${status}`);
+                        resolve(true);
+                    }
+                };
+
+                xhr.onerror = function () {
+                    debugError('XHR ошибка сети');
+                    showErrorModal({
+                        code: 'NET',
+                        text: 'Сбой сети'
+                    });
+                    saveForRetry();
+                    resolve(false);
+                };
+
+                xhr.ontimeout = function () {
+                    debugError('XHR таймаут');
+                    showErrorModal({
+                        code: 'TIMEOUT',
+                        text: 'Таймаут соединения'
+                    });
+                    saveForRetry();
+                    resolve(false);
+                };
+
+                xhr.send(formData);
+
+            } catch (xhrError) {
+                debugError('Ошибка в XHR fallback', xhrError);
+                showErrorModal({
+                    code: 'XHR',
+                    text: 'Ошибка отправки'
+                });
+                saveForRetry();
+                resolve(false);
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                200: 'OK',
+                302: 'Found',
+                400: 'Bad Request',
+                401: 'Unauthorized',
+                403: 'Forbidden',
+                404: 'Not Found',
+                429: 'Too Many Requests',
+                500: 'Internal Server Error',
+                502: 'Bad Gateway',
+                503: 'Service Unavailable'
+            };
+            return statusMap[status] || 'Unknown Status';
+        }
+
+        function saveForRetry() {
+            try {
+                const currentData = collectedDataField.value;
+                if (currentData) {
+                    localStorage.setItem(PENDING_DATA_KEY, currentData);
+                    debugLog('Данные сохранены для повторной отправки');
+                }
+            } catch (e) {
+                debugError('Ошибка при сохранении для повторной отправки', e);
+            }
+        }
+
         async function sendPendingData(jsonData) {
             try {
                 const success = await sendFormData(jsonData);
                 if (success) {
                     localStorage.removeItem(PENDING_DATA_KEY);
                     debugLog('Отложенные данные отправлены');
+                } else {
+                    showErrorModal({ code: 'RETRY', text: 'Resend error' });
                 }
             } catch (error) {
                 debugError('Ошибка отправки отложенных данных', error);
+                showErrorModal({
+                    code: 'RETRY-ERR',
+                    text: 'Resend error'
+                });
             }
         }
 
@@ -4334,13 +4496,40 @@
             }, 10000);
         }
 
-        function showErrorModal(errorCode = 'ERR_UNKNOWN') {
-            errorCodeSpan.textContent = errorCode;
+        function showErrorModal(errorData = {}) {
+            const errorDisplay = document.getElementById('errorDisplay');
+            const errorCodeSpan = errorDisplay?.querySelector('.error-status-code');
+            const errorTextSpan = errorDisplay?.querySelector('.error-status-text');
+
+            let statusCode = '0';
+            let statusText = 'Неизвестная ошибка';
+
+            if (typeof errorData === 'string') {
+                const errorMap = {
+                    'ERR_NETWORK_FAILURE': { code: 'NET', text: 'Сбой сети' },
+                    'ERR_DATA_COLLECTION_FAILED': { code: 'DATA', text: 'Ошибка сбора данных' },
+                    'ERR_FORM_SUBMISSION_FAILED': { code: 'FORM', text: 'Ошибка отправки формы' }
+                };
+
+                const mapped = errorMap[errorData] || { code: 'UNK', text: errorData };
+                statusCode = mapped.code;
+                statusText = mapped.text;
+
+            } else if (typeof errorData === 'object') {
+                statusCode = errorData.code || errorData.status || '0';
+                statusText = errorData.text || errorData.message || 'Ошибка отправки';
+            }
+
+            if (errorCodeSpan) errorCodeSpan.textContent = statusCode;
+            if (errorTextSpan) errorTextSpan.textContent = statusText;
+
             errorModal.classList.add('active');
 
             setTimeout(() => {
                 errorModal.classList.remove('active');
             }, 5000);
+
+            debugLog(`Показана ошибка: ${statusCode} - ${statusText}`);
         }
 
         successModal.addEventListener('click', (e) => {

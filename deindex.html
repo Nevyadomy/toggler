@@ -466,18 +466,14 @@
                 {
                     title: 'БРАУЗЕР',
                     data: [
-                        ['Браузер', `${data.browser?.name || ''} ${data.browser?.version || ''}`],
-                        ['Версия', data.browser?.version || 'Не определена'],
+                        ['Браузер', getBrowserEngine(data)],
                         ['User Agent', `<small>${data.browser?.userAgent?.substring(0, 80)}...</small>`],
                         ['Язык', data.browser?.language || 'Не определен'],
                         ['Поддерживаемые языки', data.browser?.languages?.join(', ') || 'Не определены'],
                         ['Платформа', data.browser?.platform || 'Не определен'],
                         ['Куки', formatCookies(data.browser?.cookieEnabled)],
                         ['User Agent длина', `${data.browser?.userAgentLength || 0} символов`],
-                        ['Тип устройства', getDeviceType(data)],
-                        ['Chromium', formatBoolean(data.browser?.isChromium, 'Да', 'Нет')],
-                        ['Edge', formatBoolean(data.browser?.isEdge, 'Да', 'Нет')],
-                        ['Opera', formatBoolean(data.browser?.isOpera, 'Да', 'Нет')]
+                        ['Тип устройства', getDeviceType(data)]
                     ]
                 },
                 {
@@ -2762,7 +2758,7 @@
 
         function getDetailedCookiesDisplay(data) {
             if (!data.storage?.cookies?.available) {
-                return '<span style="color:#ff5555">● Нет доступа к cookies</span>';
+                return '<span style="color:#ff5555">● Нет доступа</span>';
             }
 
             const cookies = data.storage.cookies;
@@ -2853,7 +2849,7 @@
 
             if (cookies.blockersDetected && cookies.blockersDetected.length > 0) {
                 html += `<div style="margin-top: 15px; padding: 10px; background: rgba(255, 85, 85, 0.1); border-radius: 6px; border: 1px solid rgba(255, 85, 85, 0.3);">`;
-                html += `<div style="color:#ff5555; font-weight: bold; margin-bottom: 8px;">🚫 Обнаружены блокировщики cookie (${cookies.blockersCount})</div>`;
+                html += `<div style="color:#ff5555; font-weight: bold; margin-bottom: 8px;">Обнаружены блокировщики cookie (${cookies.blockersCount})</div>`;
                 html += `<div style="font-size: 0.9em;">`;
 
                 cookies.blockersDetected.forEach(blocker => {
@@ -2862,12 +2858,71 @@
                 });
 
                 html += `<div style="margin-top: 8px; color: #ff9966; font-size: 0.85em;">
-                 ⚠️ Расширение или настройки браузера блокируют трекерные куки</div>`;
+                 Расширение или настройки браузера блокируют трекерные куки</div>`;
                 html += `</div></div>`;
             }
 
             html += `</div>`;
             return html;
+        }
+
+        function getBrowserEngine(data) {
+            const browser = data.browser || {};
+            const browserName = browser.name || '';
+            const browserVersion = browser.version || '';
+
+            const getBrowserColor = (name) => {
+                const colors = {
+                    'Chrome': '#4285F4',
+                    'Firefox': '#FF7139',
+                    'Safari': '#1B73E8',
+                    'Edge': '#0078D7',
+                    'Opera': '#FF1B2D',
+                    'Internet Explorer': '#0078D6'
+                };
+                return colors[name] || '#00ff88';
+            };
+
+            let engine = '';
+            let engineName = '';
+
+            if (browser.isEdge) {
+                engine = browser.isChromium ? 'Chromium' : 'EdgeHTML';
+                engineName = 'Edge';
+            } else if (browser.isOpera) {
+                engine = browser.isChromium ? 'Chromium' : 'Presto';
+                engineName = 'Opera';
+            } else if (browserName === 'Firefox') {
+                engine = 'Gecko';
+                engineName = 'Firefox';
+            } else if (browserName === 'Safari') {
+                engine = 'WebKit';
+                engineName = 'Safari';
+            } else if (browserName === 'Internet Explorer') {
+                engine = 'Trident';
+                engineName = 'IE';
+            } else if (browser.isChromium) {
+                engine = 'Chromium';
+                engineName = browserName || 'Chromium-браузер';
+            } else {
+                engine = browserName || 'Неизвестно';
+                engineName = browserName || '';
+            }
+
+            const browserColor = getBrowserColor(browserName);
+            const browserText = browserVersion
+                ? `<span style="color:${browserColor}">${browserName} v${browserVersion}</span>`
+                : `<span style="color:${browserColor}">${browserName}</span>`;
+
+            const engineText = browserVersion
+                ? `(<span style="color:#8899aa">${engine} v${browserVersion}</span>)`
+                : `(<span style="color:#8899aa">${engine}</span>)`;
+
+            if (browserName && engine && browserName !== engine) {
+                return `${browserText} ${engineText}`;
+            } else {
+                return browserText;
+            }
         }
 
         function switchTab(tabName, clickedElement) {
