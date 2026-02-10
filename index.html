@@ -1882,6 +1882,7 @@
 
             const uniqueDevices = [];
             const seenGroups = new Set();
+            devices = uniqueDevices;
 
             for (const device of devices) {
                 const groupKey = device.groupId || device.deviceId;
@@ -1902,7 +1903,6 @@
                 if (devices && devices.length > 0) {
                     const uniqueDevices = [];
                     const seenGroups = new Set();
-                    devices = uniqueDevices;
 
                     for (const device of devices) {
                         const groupKey = device.groupId || device.deviceId || 'unknown';
